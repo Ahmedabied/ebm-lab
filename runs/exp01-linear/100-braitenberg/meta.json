@@ -1,0 +1,97 @@
+{
+ "config": {
+  "seed": 100,
+  "label": "exp01-linear",
+  "policy": "braitenberg",
+  "days": 15,
+  "day_len": 300,
+  "sleep_len": 50,
+  "turn": 0.5235987755982988,
+  "speed": 1.0,
+  "lam": 0.95,
+  "day_learning": false,
+  "day_lr": 0.015625,
+  "sleep": "replay",
+  "sleep_epochs": 3,
+  "batch": 64,
+  "downscale": 0.01,
+  "cache_days": 3,
+  "clip": 1.0,
+  "growth": "surprise",
+  "growth_thresh": 0.005,
+  "growth_every": 3,
+  "growth_max": 32,
+  "snap_every": 20,
+  "runs_dir": "runs",
+  "world": {
+   "H": 48,
+   "W": 48,
+   "alpha": 0.18,
+   "keep": 0.95,
+   "emit_rate": 0.05,
+   "food_budget": 24.0,
+   "food_mass": 2.0,
+   "n_poison": 4,
+   "poison_mass": 2.0,
+   "eat_radius": 1.0,
+   "bite": 0.05,
+   "blend_mode": "linear"
+  },
+  "body": {
+   "E0": 0.8,
+   "E_max": 1.0,
+   "metabolic": 0.0005,
+   "move_cost": 0.001,
+   "unit_cost": 1.25e-05,
+   "yield_": 1.0,
+   "toxicity": 0.5,
+   "toxin_decay": 0.98,
+   "toxin_drain": 0.01,
+   "E_set": 1.0,
+   "X_set": 0.0,
+   "n": 2.0,
+   "w_E": 1.0,
+   "w_X": 1.0
+  },
+  "sense": {
+   "antenna_angle": 0.7853981633974483,
+   "antenna_len": 1.5,
+   "c0": 0.05,
+   "eps": 0.05,
+   "noise": 0.02
+  },
+  "brain": {
+   "dim": 12,
+   "H0": 4,
+   "T": 1.0,
+   "lr": 0.05,
+   "init_scale": 0.01
+  }
+ },
+ "actions": [
+  "LEFT",
+  "RIGHT",
+  "FORWARD"
+ ],
+ "source_hash": "5c04ce68aea1ae46",
+ "commit": "1c9d417",
+ "seconds": 0.89,
+ "summary": {
+  "alive": true,
+  "days": 15,
+  "ticks_alive": 5250,
+  "food": 41.1,
+  "poison": 0.0,
+  "mean_drive": 0.00054,
+  "first_food_t": 5,
+  "poison_bites_after_first": 0,
+  "H": 0
+ },
+ "world_ledger": {
+  "emitted": 17302.80194467539,
+  "decayed": 17236.985553741455,
+  "created": 66.0,
+  "eaten_food": 41.10000391155462,
+  "ingested_poison": 0.0
+ }
+}

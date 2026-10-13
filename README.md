@@ -12,6 +12,13 @@ knowledge from. No Genesis code is carried over.
 | Path | What |
 |---|---|
 | `IDEA.md` | the idea, verbatim, and its parts |
+| `RESEARCH-PLAN.md` | the goal, hypotheses H1–H5, phases (v0.1; the creature-first reorder is in session 02's journal) |
+| `DESIGN.md` + `DESIGN-AMENDMENTS.md` | creature v0's spec, and every change to it with its reason |
+| `creature/` | the code: physics, world, body, senses, brain (EBM), baselines, sim, run, export |
+| `tests/` | the laws (`uv run pytest`) |
+| `experiments/` | harness, calibration, pilots, pre-registrations, `results/` (json + png) |
+| `viewer/` | the run viewer (see its README) |
+| `runs/` | exported lives to watch |
 | `CLAUDE.md` | ground rules for any agent working here |
 | `STATE.md` | where the lab is right now (updated every session) |
 | `HANDOFF.md` | what the next session does first |

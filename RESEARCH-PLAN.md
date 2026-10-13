@@ -1,5 +1,9 @@
 # RESEARCH PLAN — EBM lab (DRAFT v0.1, 2026-10-13, awaiting Ahmed's approval)
 
+> **Reorder, 2026-10-13 (Ahmed):** the embodied minimal creature comes FIRST (see `DESIGN.md`,
+> `research/02-minimal-organism.md`); the standard continual-learning benchmarks (tier 1 below) become a
+> later validation. H1–H5 stand. Creature v0 is built; its first result is `findings/01`.
+
 > Status: **draft**. Every choice marked ⚑ is Ahmed's to confirm or change.
 
 ## 1. The goal

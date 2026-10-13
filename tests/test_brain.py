@@ -41,10 +41,10 @@ def test_learning_moves_behaviour_toward_rewarded_action():
     """Law 5: a learned thing must change an action. Reward FORWARD in a fixed sensation and the
     probability of FORWARD must rise; punish it and it must fall."""
     rng = np.random.default_rng(2)
-    br = Brain(BrainConfig(dim=DIM, lr=0.5), rng)
-    x = rng.normal(size=DIM)
-    p0 = br.policy(x[None, :])[0, 2]
-    for _ in range(20):
+    br = Brain(BrainConfig(dim=DIM, lr=0.5, T=1.0), rng)   # T=1: at T=0.3 twenty updates saturate
+    x = rng.normal(size=DIM)                                # p -> 1.0 and the gradient vanishes (a
+    p0 = br.policy(x[None, :])[0, 2]                        # confident policy cannot unlearn; see
+    for _ in range(20):                                     # findings/01 on greedy collapse)
         br.learn(x[None, :], np.array([2]), np.array([1.0]))
     p1 = br.policy(x[None, :])[0, 2]
     assert p1 > p0

@@ -1,4 +1,7 @@
 .venv/
 __pycache__/
 *.pyc
-runs/*.raw
+runs/**/ticks.jsonl
+runs/**/events.jsonl
+runs/**/fields.npz
+runs/**/brain.npz
