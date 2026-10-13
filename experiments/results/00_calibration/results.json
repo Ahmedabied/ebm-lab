@@ -1,0 +1,243 @@
+{
+ "grid": [
+  {
+   "policy": "random",
+   "metabolic": 0.0005,
+   "food_budget": 6.0,
+   "days_median": 1.0,
+   "days_min": 1,
+   "days_max": 2,
+   "food_mean": 0.14375
+  },
+  {
+   "policy": "oracle",
+   "metabolic": 0.0005,
+   "food_budget": 6.0,
+   "days_median": 8.0,
+   "days_min": 4,
+   "days_max": 8,
+   "food_mean": 17.662499999999998
+  },
+  {
+   "policy": "random",
+   "metabolic": 0.0005,
+   "food_budget": 12.0,
+   "days_median": 2.0,
+   "days_min": 1,
+   "days_max": 3,
+   "food_mean": 0.34375
+  },
+  {
+   "policy": "oracle",
+   "metabolic": 0.0005,
+   "food_budget": 12.0,
+   "days_median": 8.0,
+   "days_min": 6,
+   "days_max": 8,
+   "food_mean": 18.6125
+  },
+  {
+   "policy": "random",
+   "metabolic": 0.0005,
+   "food_budget": 24.0,
+   "days_median": 3.5,
+   "days_min": 2,
+   "days_max": 5,
+   "food_mean": 1.1875
+  },
+  {
+   "policy": "oracle",
+   "metabolic": 0.0005,
+   "food_budget": 24.0,
+   "days_median": 8.0,
+   "days_min": 8,
+   "days_max": 8,
+   "food_mean": 20.55
+  },
+  {
+   "policy": "random",
+   "metabolic": 0.001,
+   "food_budget": 6.0,
+   "days_median": 1.0,
+   "days_min": 1,
+   "days_max": 1,
+   "food_mean": 0.09375
+  },
+  {
+   "policy": "oracle",
+   "metabolic": 0.001,
+   "food_budget": 6.0,
+   "days_median": 8.0,
+   "days_min": 4,
+   "days_max": 8,
+   "food_mean": 17.662499999999998
+  },
+  {
+   "policy": "random",
+   "metabolic": 0.001,
+   "food_budget": 12.0,
+   "days_median": 1.0,
+   "days_min": 1,
+   "days_max": 2,
+   "food_mean": 0.23125
+  },
+  {
+   "policy": "oracle",
+   "metabolic": 0.001,
+   "food_budget": 12.0,
+   "days_median": 8.0,
+   "days_min": 5,
+   "days_max": 8,
+   "food_mean": 18.6125
+  },
+  {
+   "policy": "random",
+   "metabolic": 0.001,
+   "food_budget": 24.0,
+   "days_median": 2.0,
+   "days_min": 1,
+   "days_max": 3,
+   "food_mean": 0.6812500000000001
+  },
+  {
+   "policy": "oracle",
+   "metabolic": 0.001,
+   "food_budget": 24.0,
+   "days_median": 8.0,
+   "days_min": 8,
+   "days_max": 8,
+   "food_mean": 20.55
+  },
+  {
+   "policy": "random",
+   "metabolic": 0.002,
+   "food_budget": 6.0,
+   "days_median": 0.0,
+   "days_min": 0,
+   "days_max": 1,
+   "food_mean": 0.0875
+  },
+  {
+   "policy": "oracle",
+   "metabolic": 0.002,
+   "food_budget": 6.0,
+   "days_median": 8.0,
+   "days_min": 3,
+   "days_max": 8,
+   "food_mean": 17.662499999999998
+  },
+  {
+   "policy": "random",
+   "metabolic": 0.002,
+   "food_budget": 12.0,
+   "days_median": 0.0,
+   "days_min": 0,
+   "days_max": 1,
+   "food_mean": 0.15000000000000002
+  },
+  {
+   "policy": "oracle",
+   "metabolic": 0.002,
+   "food_budget": 12.0,
+   "days_median": 8.0,
+   "days_min": 5,
+   "days_max": 8,
+   "food_mean": 18.6125
+  },
+  {
+   "policy": "random",
+   "metabolic": 0.002,
+   "food_budget": 24.0,
+   "days_median": 1.0,
+   "days_min": 0,
+   "days_max": 1,
+   "food_mean": 0.4
+  },
+  {
+   "policy": "oracle",
+   "metabolic": 0.002,
+   "food_budget": 24.0,
+   "days_median": 8.0,
+   "days_min": 8,
+   "days_max": 8,
+   "food_mean": 20.55
+  }
+ ],
+ "scent_profile": [
+  [
+   0,
+   0.21246550977230072
+  ],
+  [
+   1,
+   0.08179779350757599
+  ],
+  [
+   2,
+   0.036232005804777145
+  ],
+  [
+   3,
+   0.017525212839245796
+  ],
+  [
+   4,
+   0.008929464966058731
+  ],
+  [
+   5,
+   0.004694760777056217
+  ],
+  [
+   6,
+   0.0025183807592839003
+  ],
+  [
+   7,
+   0.0013696030946448445
+  ],
+  [
+   8,
+   0.0007523065432906151
+  ],
+  [
+   9,
+   0.00041637211688794196
+  ],
+  [
+   10,
+   0.00023182231234386563
+  ],
+  [
+   11,
+   0.00012969429371878505
+  ],
+  [
+   12,
+   7.284762250492349e-05
+  ],
+  [
+   13,
+   4.105482003069483e-05
+  ],
+  [
+   14,
+   2.3203598175314255e-05
+  ],
+  [
+   15,
+   1.3146959645382594e-05
+  ]
+ ],
+ "seeds": [
+  0,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7
+ ],
+ "note": "days capped at 8; day_len 300; E0 0.8"
+}
