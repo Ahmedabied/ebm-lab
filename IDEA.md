@@ -29,3 +29,13 @@ And on the laptop, 2026-10-13:
 
 Open: what is the world / task the actions act on? what is "pretrained" on? what does a generation mean
 (a sleep cycle? a reproduction step?)? what counts as success?
+
+## Ahmed's insight, 2026-10-13 (laptop, after thinking it through)
+
+> so the creature doesnt spawn knowing what food is, its body and the chemtery teach it, everything is made
+> out of chemestry thats why everything in the rel world blends together and we trying to model it with
+> numbers is difficult to imagine let alone implemnt
+
+Design consequence (Claude): no "food" label anywhere in the code. The teacher is the body's own
+chemistry: eat something, and an internal quantity moves toward or away from its setpoint. Smells are
+blends of a few chemical "notes", so food and poison can share notes.
