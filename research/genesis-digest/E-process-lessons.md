@@ -223,7 +223,12 @@ Only the italic quotes above are.
 - Bookkeeping layers on every session: KG, BENCHMARKS, START-HERE, PLAN, amendments.
 - Waiting on detached jobs and fighting the tooling (§4).
 
-### Where the fun went **[interpretation, labelled]**
+### Where the fun went **[interpretation, labelled] — RETRACTED by Ahmed 2026-10-13**
+
+> Ahmed: "genises was never menat to be fun my job sucks my soul out im soo proud of gnises its my favourite
+> ever project, but i need a real goal and a real plan with it, it is not a small project i belive its a
+> research lab grade". The burnout came from his job. The interpretation below is wrong; it is kept as a record.
+
 
 The archive never records Ahmed saying he lost passion. That comes from him now, not from the files.
 What the files do show is a move from **a creature you could watch** (session 03: extinction, the

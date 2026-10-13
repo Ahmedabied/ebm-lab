@@ -3,8 +3,10 @@
 Read `STATE.md` and `HANDOFF.md` first, then `IDEA.md`.
 
 ## Why this exists
-Ahmed wants to learn energy-based models deeply, together, and have fun doing it. Genesis ended in burnout
-and heavy token use. Keep this light: small experiments, quick feedback, teach as we go.
+A research-lab-grade project: Ahmed's real goal and plan are in `RESEARCH-PLAN.md`. He wants to learn
+EBMs deeply AND produce a real, checkable result. Treat it with Genesis's seriousness. Genesis is his
+favourite project and was never meant to be "fun"; do not frame this lab as a light hobby. The burnout
+came from his day job, not from Genesis's rigour.
 
 ## Honesty (non-negotiable; it is why he trusts this work)
 - Every number comes from running code. Each finding records the exact command that re-derives it.
@@ -17,10 +19,10 @@ and heavy token use. Keep this light: small experiments, quick feedback, teach a
 ## Working style
 - Teach: explain the WHY of each EBM concept as we build it. Bold the instructions, keep it scannable
   (Ahmed has dyslexia + ADHD; short chunks, clear headings).
-- Small steps. One experiment = one question. Run it, look at it, talk about it.
+- One phase at a time (RESEARCH-PLAN §6), each with an exit gate. One experiment = one pre-registered question.
 - Research phase -> design -> build. Don't build during a research phase.
 - Decisions about what the experiment IS are Ahmed's. Ask; don't assume.
-- Cheap first: numpy / small PyTorch on CPU or one GPU. No cloud spend without asking.
+- Compute: laptop CPU + the box's RTX 5060 Ti 16 GB. No cloud spend without asking.
 - `~/genesis-archive` is read-only. Never edit it.
 
 ## Environment notes

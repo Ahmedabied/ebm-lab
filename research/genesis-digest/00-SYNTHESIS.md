@@ -38,19 +38,25 @@ So the lab is new ground, and it is Genesis's unfinished M2. M2's own test still
   language agreement.
 - **Same seed → identical output; measuring must not change the run.**
 
-## 4. What made Genesis stop being fun (digest E, interpretation labelled there)
+## 4. Process lessons (digest E)
+
+> **CORRECTION (Ahmed, 2026-10-13):** "genises was never menat to be fun my job sucks my soul out im soo
+> proud of gnises its my favourite ever project". The burnout came from his job, not from Genesis. Digest
+> E's "where the fun went" reading is **wrong** and is kept only as a record. What still holds below is the
+> *operational* part: token cost, re-running whole corpora, keeping him in the loop.
+
+~~What made Genesis stop being fun~~
 
 It went from **a creature you could watch** to **an audit trail you had to read**. Runs were
 unattended at night, journals grew to 1,000 lines, and small changes forced every corpus to be re-run.
 Ahmed's late inputs were mostly about *stopping*.
 
-**So for the lab:**
-1. **Live and together.** Predict, run, look. Runs take seconds, not hours.
-2. **A picture every experiment:** energy landscape, recall plot, animation.
-3. **One question per session** that teaches one EBM idea. A one-line prediction, not a gate document.
-4. **Do the core math in the main conversation.** Agents read papers; they don't do the learning for us.
-5. **Light bookkeeping:** STATE + a short journal. Keep the honesty rules, drop the ceremony.
-6. **Fun check at every close:** "did you learn something and enjoy it?"
+**What we keep for the lab:**
+1. **Ahmed in the loop:** he sees results, not just reports. A plot for every experiment.
+2. **Do the core math in the main conversation,** so the understanding is shared; agents read papers.
+3. **Design so a change doesn't force re-running everything** (versioned results, per-component seeds).
+4. **A written token budget per session,** stopping at a boundary.
+5. **Full rigour stays** (RESEARCH-PLAN §5).
 
 ## 5. The bridge: sleep is the negative phase (lit §4, synthesis)
 
@@ -66,7 +72,7 @@ Ahmed's design splits them across a day:
 That is a known split in small systems. Whether it still works **as the network grows** is the
 real question this lab can answer.
 
-## 6. The proposed ladder (lit §4; each step has a control)
+## 6. The learning ladder (lit §4). Now folded into RESEARCH-PLAN Phases 0–2 as warm-up experiments
 
 1. Classical Hopfield net: energy, attractors, capacity
 2. Dreaming / unlearning: sleep as the negative phase

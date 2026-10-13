@@ -15,3 +15,10 @@ EBM training.
 be leaner.
 
 **Next:** Ahmed picks the path (see HANDOFF).
+
+## Later the same session: correction and the real plan
+Ahmed: "genises was never menat to be fun my job sucks my soul out im soo proud of gnises its my favourite
+ever project, but i need a real goal and a real plan with it, it is not a small project i belive its a
+research lab grade". Claude had framed the lab as light and fun, which was wrong. Fixed in CLAUDE.md, 00-SYNTHESIS §4
+and digest E (retraction note). Wrote `RESEARCH-PLAN.md` v0.1: continual learning framing, H1–H5 with
+falsifiers, prior-work positioning (Li et al.; Singh et al. wake-sleep EBMs), phases 0–7 with gates.

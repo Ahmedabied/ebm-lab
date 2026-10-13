@@ -3,7 +3,8 @@
 Updated 2026-10-13, session 01.
 
 ## Where we are
-- **Phase: research done, design not started.** No experiment code exists yet.
+- **Phase: plan drafted, awaiting Ahmed's approval.** `RESEARCH-PLAN.md` v0.1 (goal, H1–H5, phases 0–7). No experiment code yet.
+- Prior work found: Li et al. 2020/22 (EBMs for CL, no growth), Singh et al. CVPRW 2024 (wake-sleep EBMs for CL, the closest). Novelty not yet confirmed (Phase 0).
 - Lab created at `~/ebm-lab` (git, branch `main`).
 - Knowledge base written:
   - `research/genesis-digest/00-SYNTHESIS.md`: the one-page version. **Start here.**
@@ -22,7 +23,7 @@ Updated 2026-10-13, session 01.
 ## Environment
 - Laptop: Python 3.12, numpy 1.26, **no torch**; 16 cores, 15 GB RAM, ~38 GB free disk.
 - **`nvidia-smi` fails: driver/library version mismatch** (likely needs a reboot after a driver update).
-- Box (`ssh workstation`) available for longer runs.
+- Box (`ssh workstation`): RTX 5060 Ti 16 GB, no torch, **disk 97% full (31 GB free)**.
 
 ## Open decisions (Ahmed's)
 See HANDOFF.md.
