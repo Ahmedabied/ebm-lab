@@ -15,7 +15,9 @@ class BodyConfig:
     E_max: float = 1.0
     metabolic: float = 0.0005    # energy per tick, resting (EXP-00 calibration, decisions/0001)
     move_cost: float = 0.001     # extra per tick when moving
-    unit_cost: float = 0.0002    # per hidden unit per tick (growth is paid for)
+    unit_cost: float = 1.25e-5   # per hidden unit per tick: 4 units = 10% of resting metabolism,
+                                 # 32 units = 80%. Growth is paid for. (Pilot 01 found the old
+                                 # 0.0002 made the brain cost more than the body; see findings/01.)
     yield_: float = 1.0          # energy per unit food mass
     toxicity: float = 0.5        # toxin per unit poison mass ingested
     toxin_decay: float = 0.98    # fraction of toxin kept per tick

@@ -29,12 +29,13 @@ class SimConfig:
     # learning
     lam: float = 0.95              # credit decay: R_t = Σ λ^k r_{t+k}; ~20 ticks of look-ahead
     day_learning: bool = False     # online REINFORCE with an eligibility trace (matched control)
-    day_lr: float = 0.05
+    day_lr: float = 1.0 / 64       # online per-sample step = sleep's batch-mean lr / batch (matched)
     sleep: str = "replay"          # replay | today | noise | none
     sleep_epochs: int = 3
     batch: int = 64
     downscale: float = 0.01
     cache_days: int = 3
+    clip: float = 1.0              # importance-ratio clip half-width for replay; pilot 01d: 1.0 > 0.2
     # growth
     growth: str = "surprise"       # surprise | timer | none
     growth_thresh: float = 0.005   # std of the day's raw lessons above this -> eventful day -> grow
@@ -241,7 +242,7 @@ class Life:
             order = self.rng.permutation(n)
             for i in range(0, n, c.batch):
                 idx = order[i:i + c.batch]
-                clipped.append(self.brain.learn(X[idx], a[idx], R[idx], logp_old=lp[idx]))
+                clipped.append(self.brain.learn(X[idx], a[idx], R[idx], logp_old=lp[idx], clip=c.clip))
         self.instr = {"clip_frac": round(float(np.mean(clipped)), 4),
                       "entropy": round(self.brain.entropy(X), 4),
                       "w_norm": round(float(np.sqrt(sum((self.brain.theta[k] ** 2).sum() for k in ("w", "u", "v")))), 4)}

@@ -57,6 +57,11 @@
   .pill { font-size: 11px; padding: 0 6px; border-radius: 8px; border: 1px solid var(--chosen); color: var(--chosen); justify-self: start; }
   .lowtag { color: var(--low); }
   #heatstrip { overflow-x: auto; }
+  #nighttable table { border-collapse: collapse; font-size: 11px; }
+  #nighttable th, #nighttable td { padding: 1px 8px; text-align: right; border-bottom: 1px solid var(--line); }
+  #nighttable th { color: var(--dim); font-weight: 600; position: sticky; top: 0; background: var(--panel); }
+  #nighttable tr.cur td { background: #2a3550; color: #fff; }
+  #nighttable tbody tr { cursor: pointer; }
   .kbd { border: 1px solid var(--line); border-radius: 3px; padding: 0 4px; color: var(--dim); font-size: 11px; }
 </style>
 </head>
@@ -72,12 +77,8 @@
     <section class="panel">
       <h2>World <small id="worldnote"></small></h2>
       <canvas id="world"></canvas>
+      <div class="legend" id="fieldlegend"></div>
       <div class="legend">
-        <span><span class="sw" style="background:#ffff40"></span>A+B (food blend)</span>
-        <span><span class="sw" style="background:#40ffff"></span>B+C (poison blend)</span>
-        <span><span class="sw" style="background:#ff3030"></span>A</span>
-        <span><span class="sw" style="background:#30ff30"></span>B</span>
-        <span><span class="sw" style="background:#3060ff"></span>C</span>
         <span><span class="sw" style="background:#ff9b3d"></span>left antenna</span>
         <span><span class="sw" style="background:#7cc4ff"></span>right antenna</span>
       </div>
@@ -152,6 +153,7 @@
             <canvas id="ubig"></canvas>
             <div class="note" id="uinfo" style="min-width:160px"></div>
           </div>
+          <div id="nighttable" style="margin-top:8px; max-height:180px; overflow:auto;"></div>
         </div>
       </section>
     </div>
@@ -189,7 +191,16 @@ function offscreen(w, h) {
   return [cv, ctx];
 }
 const fmt = (v, d = 3) => (v === null || v === undefined || Number.isNaN(v)) ? "-" : Number(v).toFixed(d);
-function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+// Build DOM nodes. String/number children become TEXT nodes, so run data is never parsed as HTML.
+function el(tag, attrs, ...kids) {
+  const n = document.createElement(tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") n.className = v; else if (k === "style") n.style.cssText = v; else n.setAttribute(k, v);
+  }
+  for (const k of kids.flat(Infinity)) if (k !== null && k !== undefined && k !== false) n.append(k instanceof Node ? k : String(k));
+  return n;
+}
+const fill = (node, ...kids) => { node.replaceChildren(); for (const k of kids.flat(Infinity)) if (k !== null && k !== undefined) node.append(k instanceof Node ? k : String(k)); };
 function bsearchLE(arr, v) { // index of last arr[i] <= v, or -1
   let lo = 0, hi = arr.length - 1, ans = -1;
   while (lo <= hi) { const m = (lo + hi) >> 1; if (arr[m] <= v) { ans = m; lo = m + 1; } else hi = m - 1; }
@@ -201,27 +212,34 @@ async function boot() {
   const params = new URLSearchParams(location.search);
   const run = params.get("run");
   if (!run) {
-    $("status").innerHTML = 'No run given. Open <code>/viewer/?run=runs/&lt;label&gt;/&lt;seed&gt;/run.json</code> ' +
-      '(path relative to the server root), or pick a run.json: <input type="file" id="pick" accept=".json">';
-    $("pick").addEventListener("change", (e) => {
+    const pick = el("input", { type: "file", id: "pick", accept: ".json" });
+    fill($("status"), "No run given. Open ", el("code", null, "/viewer/?run=runs/<label>/<seed>/run.json"),
+      " (path relative to the server root), or pick a run.json: ", pick);
+    pick.addEventListener("change", (e) => {
       const f = e.target.files[0]; if (!f) return;
       const rd = new FileReader();
-      rd.onload = () => { try { start(JSON.parse(rd.result)); } catch (err) { fail(err); } };
+      rd.onload = () => { try { start(JSON.parse(rd.result)).catch(fail); } catch (err) { fail(err); } };
       rd.readAsText(f);
     });
     return;
   }
-  // a bare relative path means "relative to the server root" (the page itself lives in /viewer/)
-  const url = /^(https?:)?\//.test(run) ? run : "/" + run;
+  // Same-origin paths only: a bare relative path means "relative to the server root" (the page
+  // itself lives in /viewer/). Anything with a scheme or a protocol-relative "//" is refused.
+  if (/^[a-z][a-z0-9+.-]*:/i.test(run) || run.startsWith("//") || run.includes("\\")) {
+    fail(new Error("refusing non-local run path: only same-origin paths like runs/<label>/<seed>/run.json are loaded"));
+    return;
+  }
+  const url = new URL(run.replace(/^\/+/, ""), location.origin + "/").pathname;
   $("status").textContent = "Loading " + url + " ...";
   try {
     const r = await fetch(url);
     if (!r.ok) throw new Error("HTTP " + r.status + " for " + url + ". Did you run `uv run python -m creature.export <run_dir>` and serve from the repo root?");
-    start(await r.json());
+    await start(await r.json());
   } catch (err) { fail(err); }
 }
 function fail(err) {
-  $("status").innerHTML = '<span class="err">Could not load run: ' + esc(err.message || err) + "</span>";
+  $("status").hidden = false;
+  fill($("status"), el("span", { class: "err" }, "Could not load run: " + String((err && err.message) || err)));
   console.error(err);
 }
 
@@ -253,8 +271,13 @@ async function start(run) {
   }
   // field images
   SNAP_T = run.fields.t || [];
-  IMGS = (run.fields.png || []).map((src) => { const im = new Image(); im.src = src; return im; });
-  await Promise.all(IMGS.map((im) => (im.decode ? im.decode().catch(() => null) : null)));
+  // only inline PNG data-URLs are accepted as field images (never a remote URL from the file)
+  IMGS = (run.fields.png || []).map((src) => {
+    const im = new Image();
+    if (typeof src === "string" && src.startsWith("data:image/png;base64,")) im.src = src;
+    return im;
+  });
+  await Promise.all(IMGS.map((im) => (im.src && im.decode ? im.decode().catch(() => null) : null)));
 
   $("status").hidden = true; $("app").hidden = false;
   renderHeader();
@@ -266,22 +289,23 @@ async function start(run) {
 // ---- header ---------------------------------------------------------------------------------
 function renderHeader() {
   const m = RUN.meta, c = m.config, s = m.summary || {};
-  $("title").innerHTML = [
-    "<b>" + esc(c.label) + "</b> / seed " + esc(c.seed),
-    "policy <b>" + esc(c.policy) + "</b>",
-    "commit <span class='mono'>" + esc(m.commit) + "</span>",
-    "source <span class='mono'>" + esc(m.source_hash) + "</span>",
-  ].join("<span class='sep'>|</span>");
-  const chip = (k, v, cls = "") => `<span class="chip ${cls}">${esc(k)} <b>${esc(v)}</b></span>`;
+  const sep = () => el("span", { class: "sep" }, "|");
+  fill($("title"), el("b", null, c.label), " / seed " + c.seed, sep(), "policy ", el("b", null, c.policy), sep(),
+    "commit ", el("span", { class: "mono" }, m.commit), sep(), "source ", el("span", { class: "mono" }, m.source_hash));
+  const chip = (k, v, cls = "") => el("span", { class: "chip " + cls }, k + " ", el("b", null, String(v)));
+  const blendMode = (c.world && c.world.blend_mode) || "linear (field absent: pre-R2 run)";
+  const noise = c.sense && c.sense.noise !== undefined ? c.sense.noise : "absent (0)";
   const chips = [
     chip("alive", s.alive, s.alive ? "good" : "bad"), chip("days", s.days), chip("ticks alive", s.ticks_alive),
     chip("food", s.food), chip("poison", s.poison), chip("mean drive", s.mean_drive),
     chip("first food t", s.first_food_t === null ? "never" : s.first_food_t),
     chip("poison bites after first", s.poison_bites_after_first), chip("H", s.H),
     chip("sleep", c.sleep), chip("growth", c.growth), chip("day learning", c.day_learning),
-    chip("days x len", c.days + " x " + c.day_len + "+" + c.sleep_len), chip("sim seconds", m.seconds),
+    chip("days x len", c.days + " x " + c.day_len + "+" + c.sleep_len), chip("blend", blendMode),
+    chip("sense noise", noise), chip("sim seconds", m.seconds),
   ];
-  $("chips").innerHTML = chips.join("");
+  fill($("chips"), chips);
+  renderLegend();
   const info = { export: { format: RUN.format, run_dir: RUN.run_dir, field_scale: RUN.fields.scale,
     snapshots_kept: SNAP_T.length, snapshots_original: RUN.fields.n_original, snapshot_stride: RUN.fields.stride,
     snap_every: RUN.fields.snap_every }, config: c, actions: m.actions, world_ledger: m.world_ledger, summary: s };
@@ -291,6 +315,25 @@ function renderHeader() {
       ` | field snapshot every ${RUN.fields.snap_every} ticks`);
   $("brainnote").textContent = T.F ? "energy-based policy: pi(a|x) = softmax(-F(x,a)/T), T = " + ((c.brain && c.brain.T) || 1)
     : "policy '" + c.policy + "' logs no energies";
+}
+
+// field legend: channel colours are fixed (A red, B green, C blue); which blend is food/poison
+// depends on the run's world.blend_mode, so it is read from run.json (export embeds the table).
+function renderLegend() {
+  const sw = (rgb) => el("span", { class: "sw", style: "background:rgb(" + rgb.join(",") + ")" });
+  const toRGB = (v) => v.map((x) => Math.round(40 + 215 * Math.min(1, x)));
+  const name = (v) => ["A", "B", "C"].filter((_, j) => v[j] > 0).join("+") || "none";
+  const items = [];
+  const bl = RUN.blends;
+  if (bl && bl.table) {
+    for (const v of bl.table.food || []) items.push(el("span", null, sw(toRGB(v)), name(v) + " = food"));
+    for (const v of bl.table.poison || []) items.push(el("span", null, sw(toRGB(v)), name(v) + " = poison"));
+    items.push(el("span", { class: "note" }, "(" + bl.mode + " world" + (bl.note ? "; " + bl.note : "") + ")"));
+  } else {
+    items.push(el("span", { class: "note" }, "food/poison blend table not in this run.json"));
+  }
+  items.push(el("span", null, sw([255, 48, 48]), "A"), el("span", null, sw([48, 255, 48]), "B"), el("span", null, sw([48, 96, 255]), "C"));
+  fill($("fieldlegend"), items);
 }
 
 // ---- layout & static backgrounds -----------------------------------------------------------
@@ -393,9 +436,25 @@ function buildUStrip() {
   uStripRects = BRAIN.map((n, k) => ({ x: gap + k * (tileW + gap), y: 2, w: tileW, h: n.H * ch, k, cw, ch, tileH }));
   ubctx = setupCanvas($("ubig"), 12 * 18 + 30, Math.min(32, maxH) * 12 + 30);
   $("uhead").textContent += ` Colour scale symmetric, |u| max over all nights = ${uAbsMax.toFixed(3)}.`;
+  buildNightTable();
+}
+// per-night instruments from the sleep_end / sleep_start events (absent in older runs -> "-")
+let nightRows = [];
+function buildNightTable() {
+  const cols = [["night", "night"], ["day", "day"], ["t", "t end"], ["H", "H"], ["surprise", "surprise"],
+    ["clip_frac", "clip_frac"], ["entropy", "entropy"], ["w_norm", "w_norm"]];
+  const shown = cols.filter(([k]) => ["night", "day", "t", "H"].includes(k) || BRAIN.some((n) => n[k] !== undefined && n[k] !== null));
+  nightRows = BRAIN.map((n, k) => {
+    const tr = el("tr", null, shown.map(([key]) => el("td", { class: "mono" }, n[key] === undefined || n[key] === null ? "-" : n[key])));
+    tr.addEventListener("click", () => { if (n.t !== null) seek(Math.max(0, bsearchLE(T.t, n.t))); });
+    return tr;
+  });
+  fill($("nighttable"), el("table", null, el("thead", null, el("tr", null, shown.map(([, lab]) => el("th", null, lab)))),
+    el("tbody", null, nightRows)));
 }
 function drawUStrip(curNight) {
   if (!BRAIN) return;
+  nightRows.forEach((tr, k) => tr.classList.toggle("cur", k === curNight));
   const cv = $("ustrip"), w = cv.width / DPR, h = cv.height / DPR;
   usctx.clearRect(0, 0, w, h);
   for (const r of uStripRects) {
@@ -408,7 +467,7 @@ function drawUStrip(curNight) {
     usctx.fillText(String(n.day === null ? r.k : n.day), r.x, r.tileH + 13);
   }
 }
-let ubigNight = -1;
+let ubigNight = -2; // -1 = before first night, -2 = not drawn yet
 function drawUBig(k) {
   if (!BRAIN) return;
   const cv = $("ubig"), w = cv.width / DPR, h = cv.height / DPR;
@@ -417,7 +476,7 @@ function drawUBig(k) {
   if (k < 0) {
     ubctx.fillStyle = C("--faint"); ubctx.font = "11px sans-serif";
     ubctx.fillText("before the first night: initial weights are not logged", 4, 20);
-    $("uinfo").innerHTML = "";
+    fill($("uinfo"));
     return;
   }
   const n = BRAIN[k], names = RUN.input_names || [], cw = 18, ch = Math.max(4, Math.min(12, Math.floor((h - 30) / n.H)));
@@ -433,9 +492,13 @@ function drawUBig(k) {
     if (ch >= 8 || i % 4 === 0) { ubctx.fillStyle = C("--dim"); ubctx.textAlign = "right"; ubctx.fillText("h" + i, ox - 3, oy + i * ch + ch - 2); ubctx.textAlign = "left"; }
     for (let j = 0; j < n.u[i].length; j++) { ubctx.fillStyle = divColor(n.u[i][j]); ubctx.fillRect(ox + j * cw, oy + i * ch, cw - 1, ch - 1); }
   }
-  $("uinfo").innerHTML = `<b>night ${k}</b> (end of day ${n.day}, t=${n.t})<br>H = ${n.H} hidden units<br>` +
-    `rows = hidden units, columns = inputs:<br>L/R = left/right antenna, A/B/C = notes, d = change, E/X = body, bias.<br>` +
-    `<span id="uhover" class="mono"></span>`;
+  const br = () => el("br");
+  const instr = [["surprise", n.surprise], ["clip_frac", n.clip_frac], ["entropy", n.entropy], ["w_norm", n.w_norm]]
+    .filter(([, v]) => v !== undefined && v !== null).map(([k2, v]) => [k2 + " = " + v, br()]);
+  fill($("uinfo"), el("b", null, "night " + k), " (end of day " + n.day + ", t=" + n.t + ")", br(),
+    "H = " + n.H + " hidden units", br(), instr,
+    "rows = hidden units, columns = inputs:", br(), "L/R = left/right antenna, A/B/C = notes, d = change, E/X = body, bias.", br(),
+    el("span", { id: "uhover", class: "mono" }));
 }
 
 // ---- per-frame drawing ----------------------------------------------------------------------
@@ -479,8 +542,8 @@ function drawWorld(i) {
       ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(tx, ty); ctx.stroke();
       ctx.fillStyle = col; ctx.beginPath(); ctx.arc(tx, ty, 2.5, 0, 2 * Math.PI); ctx.fill();
     }
-    const fx = Math.cos(h), fy = Math.sin(h), px = -fy, py = fx, L = 1.0;
-    const pts = [[cy + L * fy, cx + L * fx], [cy - 0.6 * fy + 0.55 * py, cx - 0.6 * fx + 0.55 * px], [cy - 0.6 * fy - 0.55 * py, cx - 0.6 * fx - 0.55 * px]].map(([yy, xx]) => P(yy, xx));
+    const fx = Math.cos(h), fy = Math.sin(h), px = -fy, py = fx, L = 1.25, B = 0.8, Wd = 0.7;
+    const pts = [[cy + L * fy, cx + L * fx], [cy - B * fy + Wd * py, cx - B * fx + Wd * px], [cy - B * fy - Wd * py, cx - B * fx - Wd * px]].map(([yy, xx]) => P(yy, xx));
     ctx.fillStyle = asleep ? "#8890a8" : "#ffffff"; ctx.strokeStyle = "#000"; ctx.lineWidth = 1.2;
     ctx.beginPath(); ctx.moveTo(...pts[0]); ctx.lineTo(...pts[1]); ctx.lineTo(...pts[2]); ctx.closePath(); ctx.fill(); ctx.stroke();
     for (const e of evs) {
@@ -537,16 +600,16 @@ function drawBrain(i) {
   if (!T.F) {
     $("fhead").textContent = `This policy (${CFG.policy}) logs no action energies. Only the chosen action is shown.`;
     $("faxismode").parentElement.style.display = "none";
-    names.forEach((n, k) => rows.push(`<span class="name">${n}</span><div class="bar"><div style="width:0"></div></div><span></span><span></span>` +
-      `${!asleep && a === k ? '<span class="pill">chosen</span>' : "<span></span>"}`));
+    names.forEach((n, k) => rows.push(el("span", { class: "name" }, n), el("div", { class: "bar" }), el("span"), el("span"),
+      !asleep && a === k ? el("span", { class: "pill" }, "chosen") : el("span")));
     $("faxis").textContent = asleep ? "asleep: no action this tick" : "";
-    $("ftable").innerHTML = rows.join("");
+    fill($("ftable"), rows);
     return;
   }
   const F = [T.F[0][i], T.F[1][i], T.F[2][i]];
   if (F[0] === null) {
-    names.forEach((n) => rows.push(`<span class="name">${n}</span><div class="bar"></div><span class="val">-</span><span></span><span></span>`));
-    $("ftable").innerHTML = rows.join("");
+    names.forEach((n) => rows.push(el("span", { class: "name" }, n), el("div", { class: "bar" }), el("span", { class: "val" }, "-"), el("span"), el("span")));
+    fill($("ftable"), rows);
     $("faxis").textContent = asleep ? "asleep: the brain does not act at night (no F logged)" : "no F logged this tick";
     return;
   }
@@ -560,14 +623,15 @@ function drawBrain(i) {
   names.forEach((n, k) => {
     const frac = (F[k] - lo) / Math.max(hi - lo, 1e-9);
     const col = k === lowK ? C("--low") : "#56607a";
-    rows.push(`<span class="name ${k === lowK ? "lowtag" : ""}">${n}</span>` +
-      `<div class="bar"><div style="width:${(100 * Math.max(0.01, Math.min(1, frac))).toFixed(1)}%;background:${col}"></div></div>` +
-      `<span class="val mono">${fmt(F[k], 4)}</span><span class="val mono">pi ${fmt(pi[k], 2)}</span>` +
-      `${a === k ? '<span class="pill">chosen</span>' : "<span></span>"}`);
+    const fillDiv = el("div"); fillDiv.style.width = (100 * Math.max(0.01, Math.min(1, frac))).toFixed(1) + "%"; fillDiv.style.background = col;
+    rows.push(el("span", { class: "name" + (k === lowK ? " lowtag" : "") }, n), el("div", { class: "bar" }, fillDiv),
+      el("span", { class: "val mono" }, fmt(F[k], 4)), el("span", { class: "val mono" }, "pi " + fmt(pi[k], 2)),
+      a === k ? el("span", { class: "pill" }, "chosen") : el("span"));
   });
-  $("ftable").innerHTML = rows.join("");
-  $("faxis").innerHTML = `bars start at F = ${fmt(lo, 3)} and end at ${fmt(hi, 3)} (shorter = lower energy). ` +
-    `<span class="lowtag">green</span> = lowest F. The action is <i>sampled</i> from pi, so "chosen" need not be the lowest.`;
+  fill($("ftable"), rows);
+  fill($("faxis"), "bars start at F = " + fmt(lo, 3) + " and end at " + fmt(hi, 3) + " (shorter = lower energy). ",
+    el("span", { class: "lowtag" }, "green"), " = lowest F. The action is ", el("i", null, "sampled"),
+    ' from pi, so "chosen" need not be the lowest.');
 }
 
 function drawReadout(i) {

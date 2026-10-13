@@ -8,9 +8,13 @@ changes no run file. Pure stdlib + numpy (the PNG encoder below is ~20 lines of 
 
 FIELD COLOUR CODE (fixed, identical for every run so runs can be compared by eye)
     note A -> red, note B -> green, note C -> blue
-    food emits A+B   -> reads YELLOW
-    poison emits B+C -> reads CYAN
-    a cell that holds both blends reads toward WHITE
+    linear world (world.blend_mode = "linear", and every run from before that field existed):
+        food emits A+B -> reads YELLOW;  poison emits B+C -> reads CYAN
+    xor world (world.blend_mode = "xor"):
+        food emits A+B -> reads YELLOW;  poison emits A alone (RED) or B alone (GREEN)
+        so in the xor world yellow = food is only readable as "red AND green together".
+    The run's actual table is copied into run.json["blends"] (from creature.world.BLENDS) and the
+    viewer builds its legend from it. Overlapping plumes mix additively (toward white).
     intensity = clip( log1p(v / C0) / log1p(VMAX / C0), 0, 1 ) per channel, then x255.
     C0 = 0.01, VMAX = 0.3. Measured on 20-day oracle/braitenberg runs at default config the
     field max is ~0.23-0.29 and the 99th percentile ~0.05-0.09, so VMAX=0.3 almost never clips and
@@ -88,25 +92,59 @@ def ticks_to_columns(ticks):
     return cols
 
 
+INSTR_KEYS = ("clip_frac", "entropy", "w_norm")   # sleep_end instruments (R1/R2 sims); absent before
+
+
 def read_brain(path, events):
-    """brain.npz -> list of per-night dicts {t, day, H, u, v, c}. The i-th snapshot is taken just
-    before the i-th sleep_end event (sim.py), so that event supplies its time and day."""
+    """brain.npz -> list of per-night dicts {night, t, day, H, u, ...every other param key...,
+    surprise, clip_frac, entropy, w_norm}. The i-th snapshot is taken just before the i-th
+    sleep_end event (sim.py), so that event supplies its time, day and instruments; the i-th
+    sleep_start supplies the night's surprise. Missing fields are simply left out."""
     if not os.path.exists(path):
         return None
     z = np.load(path)
-    idx = sorted({int(k.rsplit("_", 1)[1]) for k in z.files})
+    by_i = {}
+    for k in z.files:
+        name, i = k.rsplit("_", 1)
+        by_i.setdefault(int(i), {})[name] = k
     ends = [e for e in events if e["kind"] == "sleep_end"]
+    starts = [e for e in events if e["kind"] == "sleep_start"]
     out = []
-    for i in idx:
+    for i in sorted(by_i):
         e = ends[i] if i < len(ends) else {"t": None, "day": None}
-        u = z[f"u_{i}"]
-        out.append({"night": i, "t": e["t"], "day": e["day"], "H": int(u.shape[0]),
-                    "u": np.round(u, 4).tolist(),
-                    "v": np.round(z[f"v_{i}"], 4).tolist(),
-                    "c": np.round(z[f"c_{i}"], 4).tolist(),
-                    "w": np.round(z[f"w_{i}"], 4).tolist(),
-                    "b": np.round(z[f"b_{i}"], 4).tolist()})
+        d = {"night": i, "t": e["t"], "day": e["day"]}
+        for name, key in by_i[i].items():
+            d[name] = np.round(z[key], 4).tolist()
+        d["H"] = int(np.asarray(z[by_i[i]["u"]]).shape[0]) if "u" in by_i[i] else None
+        if i < len(starts) and "surprise" in starts[i]:
+            d["surprise"] = starts[i]["surprise"]
+        for k in INSTR_KEYS:
+            if k in e:
+                d[k] = e[k]
+        out.append(d)
     return out
+
+
+def blend_table(cfg: dict) -> dict:
+    """Which chemical blend is food and which is poison in this run's world, for the legend.
+    Taken from creature.world.BLENDS of the CURRENT source tree, keyed by the run's
+    world.blend_mode (runs from before blend_mode existed are 'linear', the only world then).
+    If the run's source_hash differs from today's source, the table could in principle differ;
+    the note field says so."""
+    mode = cfg.get("world", {}).get("blend_mode", "linear")
+    try:
+        from .world import BLENDS, FOOD, POISON
+        from .sim import source_hash
+        if mode not in BLENDS:  # noqa
+            return {"mode": mode, "table": None, "note": "unknown blend_mode"}
+        tab = {"food": [np.asarray(v).tolist() for v in BLENDS[mode][FOOD]],
+               "poison": [np.asarray(v).tolist() for v in BLENDS[mode][POISON]]}
+        note = None
+        if source_hash() != cfg.get("_source_hash_of_run"):
+            note = "blend table read from current source"
+        return {"mode": mode, "table": tab, "note": note}
+    except Exception as ex:   # never fail an export over the legend
+        return {"mode": mode, "table": None, "note": f"could not read BLENDS: {ex}"}
 
 
 # ---- main ------------------------------------------------------------------------------------
@@ -127,6 +165,7 @@ def export(run_dir: str, budget_mb: float = 5.0) -> dict:
 
     doc = {"format": "ebm-lab-run/1", "run_dir": run_dir, "meta": meta, "events": events,
            "ticks": cols, "brain": brain, "input_names": INPUT_NAMES,
+           "blends": blend_table({**meta["config"], "_source_hash_of_run": meta.get("source_hash")}),
            "sense": meta["config"].get("sense", {}),
            "world": {"H": meta["config"]["world"]["H"], "W": meta["config"]["world"]["W"]},
            "fields": {"scale": {"C0": C0, "VMAX": VMAX, "rule": "log1p(v/C0)/log1p(VMAX/C0), clipped"},

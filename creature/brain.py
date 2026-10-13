@@ -25,8 +25,8 @@ A = len(ACTIONS)
 class BrainConfig:
     dim: int = 12
     H0: int = 4
-    T: float = 1.0
-    lr: float = 0.05
+    T: float = 0.3                 # pilot 01e: 0.3 > 0.5 > 1.0; 0.1 collapses (too greedy)
+    lr: float = 1.0                # pilot 01d (seeds 0-7 burned): batch-mean lr; 3 epochs > 10
     init_scale: float = 0.01       # near-uniform policy at birth (pilot 01: a turning bias traps
                                    # an untrained creature in loops; see findings)
 

@@ -5,7 +5,11 @@ from dataclasses import dataclass
 import numpy as np
 from .world import NOTES
 
-DIM = 3 * NOTES + 2 + 1      # left(3), right(3), change(3), body(2), bias(1) = 12
+DIM = 3 * NOTES + 2 + 1      # contrast(3), mean(3), change(3), body(2), bias(1) = 12
+# Opponent coding (amendment A3, pilot 01c): the brain is handed, per note, the left/right CONTRAST
+# (L-R)/(L+R+eps) in [-1, 1], the mean log level, and its change since last tick. With raw L and R
+# the left-right difference is ~0.15 log units, so a decisive turn would need weights ~13; contrast
+# makes it O(1). The brain still has to learn which notes are good and what to do about them.
 
 
 @dataclass
@@ -13,6 +17,7 @@ class SenseConfig:
     antenna_angle: float = np.deg2rad(45.0)
     antenna_len: float = 1.5
     c0: float = 0.05           # log-compression scale: x = log1p(c / c0)
+    eps: float = 0.05          # contrast floor: far from any source, contrast -> 0, not noise/noise
     noise: float = 0.02        # Gaussian noise on each antenna reading (log units). R2: without
                                # noise, steering is trivially easy; real sensors are noisy.
 
@@ -40,5 +45,6 @@ class Senses:
         mean = 0.5 * (left + right)
         change = mean - self.prev_mean
         self.prev_mean = mean
-        vec = np.concatenate([left, right, change, body, [1.0]]).astype(np.float32)
-        return {"left": left, "right": right, "change": change, "body": body, "x": vec}
+        contrast = (left - right) / (np.abs(left) + np.abs(right) + self.cfg.eps)
+        vec = np.concatenate([contrast, mean, change, body, [1.0]]).astype(np.float32)
+        return {"left": left, "right": right, "contrast": contrast, "change": change, "body": body, "x": vec}

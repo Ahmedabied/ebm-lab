@@ -1,0 +1,1052 @@
+{
+ "name": "01c_pilot_lr",
+ "command": "experiments/01c_pilot_lr.py",
+ "commit": "a1c63ba",
+ "source_hash": "6de5700d01cd08dc",
+ "seeds": [
+  0,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7
+ ],
+ "days": 15,
+ "day_len": 300,
+ "arms": {
+  "ebm-lr0.05-ep3": {
+   "policy": "ebm",
+   "brain.lr": 0.05,
+   "sleep_epochs": 3
+  },
+  "ebm-lr0.05-ep10": {
+   "policy": "ebm",
+   "brain.lr": 0.05,
+   "sleep_epochs": 10
+  },
+  "ebm-lr0.2-ep3": {
+   "policy": "ebm",
+   "brain.lr": 0.2,
+   "sleep_epochs": 3
+  },
+  "ebm-lr0.2-ep10": {
+   "policy": "ebm",
+   "brain.lr": 0.2,
+   "sleep_epochs": 10
+  },
+  "ebm-lr0.5-ep3": {
+   "policy": "ebm",
+   "brain.lr": 0.5,
+   "sleep_epochs": 3
+  },
+  "ebm-lr0.5-ep10": {
+   "policy": "ebm",
+   "brain.lr": 0.5,
+   "sleep_epochs": 10
+  },
+  "tabular_q": {
+   "policy": "tabular_q"
+  }
+ },
+ "lives": {
+  "ebm-lr0.05-ep3": [
+   {
+    "alive": false,
+    "days": 1,
+    "ticks_alive": 636,
+    "food": 0.2,
+    "poison": 0.3,
+    "mean_drive": 0.47348,
+    "first_food_t": 483,
+    "poison_bites_after_first": 5,
+    "H": 4,
+    "seed": 0
+   },
+   {
+    "alive": false,
+    "days": 2,
+    "ticks_alive": 830,
+    "food": 0.4,
+    "poison": 0.05,
+    "mean_drive": 0.40913,
+    "first_food_t": 147,
+    "poison_bites_after_first": 0,
+    "H": 5,
+    "seed": 1
+   },
+   {
+    "alive": false,
+    "days": 2,
+    "ticks_alive": 798,
+    "food": 0.35,
+    "poison": 0.05,
+    "mean_drive": 0.36215,
+    "first_food_t": 15,
+    "poison_bites_after_first": 0,
+    "H": 5,
+    "seed": 2
+   },
+   {
+    "alive": false,
+    "days": 3,
+    "ticks_alive": 1079,
+    "food": 0.8,
+    "poison": 0.3,
+    "mean_drive": 0.29922,
+    "first_food_t": 52,
+    "poison_bites_after_first": 5,
+    "H": 6,
+    "seed": 3
+   },
+   {
+    "alive": false,
+    "days": 3,
+    "ticks_alive": 1258,
+    "food": 1.05,
+    "poison": 0.2,
+    "mean_drive": 0.38078,
+    "first_food_t": 30,
+    "poison_bites_after_first": 3,
+    "H": 5,
+    "seed": 4
+   },
+   {
+    "alive": false,
+    "days": 4,
+    "ticks_alive": 1602,
+    "food": 1.55,
+    "poison": 0.2,
+    "mean_drive": 0.40262,
+    "first_food_t": 350,
+    "poison_bites_after_first": 3,
+    "H": 7,
+    "seed": 5
+   },
+   {
+    "alive": false,
+    "days": 3,
+    "ticks_alive": 1187,
+    "food": 0.95,
+    "poison": 0.25,
+    "mean_drive": 0.29665,
+    "first_food_t": 64,
+    "poison_bites_after_first": 4,
+    "H": 5,
+    "seed": 6
+   },
+   {
+    "alive": false,
+    "days": 4,
+    "ticks_alive": 1461,
+    "food": 1.4,
+    "poison": 0.5,
+    "mean_drive": 0.32851,
+    "first_food_t": 50,
+    "poison_bites_after_first": 9,
+    "H": 7,
+    "seed": 7
+   }
+  ],
+  "ebm-lr0.05-ep10": [
+   {
+    "alive": false,
+    "days": 1,
+    "ticks_alive": 630,
+    "food": 0.15,
+    "poison": 0.1,
+    "mean_drive": 0.48441,
+    "first_food_t": 506,
+    "poison_bites_after_first": 1,
+    "H": 4,
+    "seed": 0
+   },
+   {
+    "alive": false,
+    "days": 3,
+    "ticks_alive": 1205,
+    "food": 0.95,
+    "poison": 0.1,
+    "mean_drive": 0.42641,
+    "first_food_t": 147,
+    "poison_bites_after_first": 1,
+    "H": 6,
+    "seed": 1
+   },
+   {
+    "alive": false,
+    "days": 2,
+    "ticks_alive": 815,
+    "food": 0.4,
+    "poison": 0.15,
+    "mean_drive": 0.35145,
+    "first_food_t": 15,
+    "poison_bites_after_first": 2,
+    "H": 5,
+    "seed": 2
+   },
+   {
+    "alive": false,
+    "days": 2,
+    "ticks_alive": 970,
+    "food": 0.7,
+    "poison": 0.4,
+    "mean_drive": 0.38534,
+    "first_food_t": 52,
+    "poison_bites_after_first": 7,
+    "H": 4,
+    "seed": 3
+   },
+   {
+    "alive": false,
+    "days": 7,
+    "ticks_alive": 2660,
+    "food": 3.2,
+    "poison": 0.6,
+    "mean_drive": 0.36678,
+    "first_food_t": 30,
+    "poison_bites_after_first": 11,
+    "H": 10,
+    "seed": 4
+   },
+   {
+    "alive": false,
+    "days": 1,
+    "ticks_alive": 630,
+    "food": 0.15,
+    "poison": 0.1,
+    "mean_drive": 0.41522,
+    "first_food_t": 350,
+    "poison_bites_after_first": 1,
+    "H": 4,
+    "seed": 5
+   },
+   {
+    "alive": false,
+    "days": 2,
+    "ticks_alive": 1039,
+    "food": 0.7,
+    "poison": 0.1,
+    "mean_drive": 0.38677,
+    "first_food_t": 64,
+    "poison_bites_after_first": 1,
+    "H": 5,
+    "seed": 6
+   },
+   {
+    "alive": false,
+    "days": 2,
+    "ticks_alive": 752,
+    "food": 0.35,
+    "poison": 0.35,
+    "mean_drive": 0.35867,
+    "first_food_t": 50,
+    "poison_bites_after_first": 6,
+    "H": 5,
+    "seed": 7
+   }
+  ],
+  "ebm-lr0.2-ep3": [
+   {
+    "alive": false,
+    "days": 1,
+    "ticks_alive": 565,
+    "food": 0.05,
+    "poison": 0.1,
+    "mean_drive": 0.43626,
+    "first_food_t": 398,
+    "poison_bites_after_first": 1,
+    "H": 4,
+    "seed": 0
+   },
+   {
+    "alive": false,
+    "days": 3,
+    "ticks_alive": 1189,
+    "food": 0.9,
+    "poison": 0.0,
+    "mean_drive": 0.4913,
+    "first_food_t": 147,
+    "poison_bites_after_first": 0,
+    "H": 6,
+    "seed": 1
+   },
+   {
+    "alive": false,
+    "days": 2,
+    "ticks_alive": 911,
+    "food": 0.55,
+    "poison": 0.15,
+    "mean_drive": 0.37271,
+    "first_food_t": 15,
+    "poison_bites_after_first": 2,
+    "H": 5,
+    "seed": 2
+   },
+   {
+    "alive": false,
+    "days": 2,
+    "ticks_alive": 1020,
+    "food": 0.75,
+    "poison": 0.4,
+    "mean_drive": 0.38277,
+    "first_food_t": 52,
+    "poison_bites_after_first": 7,
+    "H": 4,
+    "seed": 3
+   },
+   {
+    "alive": false,
+    "days": 11,
+    "ticks_alive": 3974,
+    "food": 5.15,
+    "poison": 0.55,
+    "mean_drive": 0.18182,
+    "first_food_t": 30,
+    "poison_bites_after_first": 10,
+    "H": 11,
+    "seed": 4
+   },
+   {
+    "alive": false,
+    "days": 2,
+    "ticks_alive": 720,
+    "food": 0.25,
+    "poison": 0.15,
+    "mean_drive": 0.42304,
+    "first_food_t": 350,
+    "poison_bites_after_first": 2,
+    "H": 5,
+    "seed": 5
+   },
+   {
+    "alive": true,
+    "days": 15,
+    "ticks_alive": 5250,
+    "food": 9.0,
+    "poison": 1.15,
+    "mean_drive": 0.23941,
+    "first_food_t": 64,
+    "poison_bites_after_first": 22,
+    "H": 14,
+    "seed": 6
+   },
+   {
+    "alive": false,
+    "days": 2,
+    "ticks_alive": 753,
+    "food": 0.4,
+    "poison": 0.55,
+    "mean_drive": 0.3404,
+    "first_food_t": 50,
+    "poison_bites_after_first": 10,
+    "H": 5,
+    "seed": 7
+   }
+  ],
+  "ebm-lr0.2-ep10": [
+   {
+    "alive": false,
+    "days": 1,
+    "ticks_alive": 533,
+    "food": 0.0,
+    "poison": 0.1,
+    "mean_drive": 0.4273,
+    "first_food_t": null,
+    "poison_bites_after_first": 1,
+    "H": 4,
+    "seed": 0
+   },
+   {
+    "alive": false,
+    "days": 2,
+    "ticks_alive": 729,
+    "food": 0.25,
+    "poison": 0.1,
+    "mean_drive": 0.39576,
+    "first_food_t": 147,
+    "poison_bites_after_first": 1,
+    "H": 5,
+    "seed": 1
+   },
+   {
+    "alive": false,
+    "days": 2,
+    "ticks_alive": 730,
+    "food": 0.3,
+    "poison": 0.45,
+    "mean_drive": 0.35732,
+    "first_food_t": 15,
+    "poison_bites_after_first": 8,
+    "H": 5,
+    "seed": 2
+   },
+   {
+    "alive": false,
+    "days": 3,
+    "ticks_alive": 1277,
+    "food": 1.1,
+    "poison": 0.25,
+    "mean_drive": 0.31973,
+    "first_food_t": 52,
+    "poison_bites_after_first": 4,
+    "H": 6,
+    "seed": 3
+   },
+   {
+    "alive": false,
+    "days": 4,
+    "ticks_alive": 1569,
+    "food": 1.45,
+    "poison": 0.0,
+    "mean_drive": 0.23227,
+    "first_food_t": 30,
+    "poison_bites_after_first": 0,
+    "H": 7,
+    "seed": 4
+   },
+   {
+    "alive": false,
+    "days": 2,
+    "ticks_alive": 838,
+    "food": 0.4,
+    "poison": 0.0,
+    "mean_drive": 0.49732,
+    "first_food_t": 350,
+    "poison_bites_after_first": 0,
+    "H": 5,
+    "seed": 5
+   },
+   {
+    "alive": false,
+    "days": 6,
+    "ticks_alive": 2268,
+    "food": 2.6,
+    "poison": 0.1,
+    "mean_drive": 0.24265,
+    "first_food_t": 64,
+    "poison_bites_after_first": 1,
+    "H": 7,
+    "seed": 6
+   },
+   {
+    "alive": false,
+    "days": 1,
+    "ticks_alive": 643,
+    "food": 0.25,
+    "poison": 0.45,
+    "mean_drive": 0.3128,
+    "first_food_t": 50,
+    "poison_bites_after_first": 8,
+    "H": 4,
+    "seed": 7
+   }
+  ],
+  "ebm-lr0.5-ep3": [
+   {
+    "alive": false,
+    "days": 1,
+    "ticks_alive": 565,
+    "food": 0.05,
+    "poison": 0.1,
+    "mean_drive": 0.44628,
+    "first_food_t": 467,
+    "poison_bites_after_first": 1,
+    "H": 4,
+    "seed": 0
+   },
+   {
+    "alive": false,
+    "days": 2,
+    "ticks_alive": 838,
+    "food": 0.4,
+    "poison": 0.0,
+    "mean_drive": 0.43491,
+    "first_food_t": 147,
+    "poison_bites_after_first": 0,
+    "H": 5,
+    "seed": 1
+   },
+   {
+    "alive": false,
+    "days": 3,
+    "ticks_alive": 1054,
+    "food": 0.7,
+    "poison": 0.05,
+    "mean_drive": 0.34111,
+    "first_food_t": 15,
+    "poison_bites_after_first": 0,
+    "H": 5,
+    "seed": 2
+   },
+   {
+    "alive": false,
+    "days": 7,
+    "ticks_alive": 2567,
+    "food": 5.5,
+    "poison": 0.6,
+    "mean_drive": 0.13054,
+    "first_food_t": 52,
+    "poison_bites_after_first": 11,
+    "H": 5,
+    "seed": 3
+   },
+   {
+    "alive": false,
+    "days": 7,
+    "ticks_alive": 2627,
+    "food": 3.0,
+    "poison": 0.25,
+    "mean_drive": 0.16424,
+    "first_food_t": 30,
+    "poison_bites_after_first": 4,
+    "H": 6,
+    "seed": 4
+   },
+   {
+    "alive": false,
+    "days": 2,
+    "ticks_alive": 758,
+    "food": 0.3,
+    "poison": 0.1,
+    "mean_drive": 0.46258,
+    "first_food_t": 350,
+    "poison_bites_after_first": 1,
+    "H": 5,
+    "seed": 5
+   },
+   {
+    "alive": false,
+    "days": 4,
+    "ticks_alive": 1431,
+    "food": 1.3,
+    "poison": 0.3,
+    "mean_drive": 0.29269,
+    "first_food_t": 64,
+    "poison_bites_after_first": 5,
+    "H": 6,
+    "seed": 6
+   },
+   {
+    "alive": false,
+    "days": 4,
+    "ticks_alive": 1624,
+    "food": 1.6,
+    "poison": 0.3,
+    "mean_drive": 0.34308,
+    "first_food_t": 50,
+    "poison_bites_after_first": 5,
+    "H": 7,
+    "seed": 7
+   }
+  ],
+  "ebm-lr0.5-ep10": [
+   {
+    "alive": false,
+    "days": 1,
+    "ticks_alive": 683,
+    "food": 0.2,
+    "poison": 0.1,
+    "mean_drive": 0.49399,
+    "first_food_t": 419,
+    "poison_bites_after_first": 1,
+    "H": 4,
+    "seed": 0
+   },
+   {
+    "alive": false,
+    "days": 2,
+    "ticks_alive": 702,
+    "food": 0.2,
+    "poison": 0.05,
+    "mean_drive": 0.39725,
+    "first_food_t": 147,
+    "poison_bites_after_first": 0,
+    "H": 4,
+    "seed": 1
+   },
+   {
+    "alive": false,
+    "days": 3,
+    "ticks_alive": 1054,
+    "food": 0.7,
+    "poison": 0.05,
+    "mean_drive": 0.38742,
+    "first_food_t": 15,
+    "poison_bites_after_first": 0,
+    "H": 5,
+    "seed": 2
+   },
+   {
+    "alive": false,
+    "days": 2,
+    "ticks_alive": 982,
+    "food": 0.7,
+    "poison": 0.4,
+    "mean_drive": 0.31768,
+    "first_food_t": 52,
+    "poison_bites_after_first": 7,
+    "H": 5,
+    "seed": 3
+   },
+   {
+    "alive": false,
+    "days": 3,
+    "ticks_alive": 1250,
+    "food": 1.05,
+    "poison": 0.25,
+    "mean_drive": 0.33089,
+    "first_food_t": 30,
+    "poison_bites_after_first": 4,
+    "H": 5,
+    "seed": 4
+   },
+   {
+    "alive": false,
+    "days": 2,
+    "ticks_alive": 774,
+    "food": 0.3,
+    "poison": 0.0,
+    "mean_drive": 0.49571,
+    "first_food_t": 515,
+    "poison_bites_after_first": 0,
+    "H": 5,
+    "seed": 5
+   },
+   {
+    "alive": false,
+    "days": 9,
+    "ticks_alive": 3376,
+    "food": 4.25,
+    "poison": 0.65,
+    "mean_drive": 0.29733,
+    "first_food_t": 64,
+    "poison_bites_after_first": 12,
+    "H": 10,
+    "seed": 6
+   },
+   {
+    "alive": false,
+    "days": 2,
+    "ticks_alive": 855,
+    "food": 0.5,
+    "poison": 0.3,
+    "mean_drive": 0.3864,
+    "first_food_t": 50,
+    "poison_bites_after_first": 5,
+    "H": 5,
+    "seed": 7
+   }
+  ],
+  "tabular_q": [
+   {
+    "alive": true,
+    "days": 15,
+    "ticks_alive": 5250,
+    "food": 12.75,
+    "poison": 2.35,
+    "mean_drive": 0.00884,
+    "first_food_t": 5,
+    "poison_bites_after_first": 46,
+    "H": 0,
+    "seed": 0
+   },
+   {
+    "alive": true,
+    "days": 15,
+    "ticks_alive": 5250,
+    "food": 13.65,
+    "poison": 1.6,
+    "mean_drive": 0.01605,
+    "first_food_t": 86,
+    "poison_bites_after_first": 31,
+    "H": 0,
+    "seed": 1
+   },
+   {
+    "alive": true,
+    "days": 15,
+    "ticks_alive": 5250,
+    "food": 17.15,
+    "poison": 0.3,
+    "mean_drive": 0.01051,
+    "first_food_t": 29,
+    "poison_bites_after_first": 5,
+    "H": 0,
+    "seed": 2
+   },
+   {
+    "alive": true,
+    "days": 15,
+    "ticks_alive": 5250,
+    "food": 12.35,
+    "poison": 0.85,
+    "mean_drive": 0.1003,
+    "first_food_t": 15,
+    "poison_bites_after_first": 16,
+    "H": 0,
+    "seed": 3
+   },
+   {
+    "alive": true,
+    "days": 15,
+    "ticks_alive": 5250,
+    "food": 12.9,
+    "poison": 2.3,
+    "mean_drive": 0.14071,
+    "first_food_t": 79,
+    "poison_bites_after_first": 45,
+    "H": 0,
+    "seed": 4
+   },
+   {
+    "alive": false,
+    "days": 2,
+    "ticks_alive": 967,
+    "food": 0.55,
+    "poison": 0.0,
+    "mean_drive": 0.48746,
+    "first_food_t": 351,
+    "poison_bites_after_first": 0,
+    "H": 0,
+    "seed": 5
+   },
+   {
+    "alive": false,
+    "days": 1,
+    "ticks_alive": 618,
+    "food": 0.1,
+    "poison": 0.1,
+    "mean_drive": 0.39436,
+    "first_food_t": 168,
+    "poison_bites_after_first": 1,
+    "H": 0,
+    "seed": 6
+   },
+   {
+    "alive": true,
+    "days": 15,
+    "ticks_alive": 5250,
+    "food": 21.75,
+    "poison": 1.8,
+    "mean_drive": 0.00393,
+    "first_food_t": 3,
+    "poison_bites_after_first": 35,
+    "H": 0,
+    "seed": 7
+   }
+  ]
+ },
+ "seconds": 17.3,
+ "stats": {
+  "ebm-lr0.05-ep3": {
+   "ticks_alive": {
+    "mean": 1106.375,
+    "lo": 895.346875,
+    "hi": 1318.01875,
+    "n": 8,
+    "median": 1133.0
+   },
+   "days": {
+    "mean": 2.75,
+    "lo": 2.125,
+    "hi": 3.375,
+    "n": 8,
+    "median": 3.0
+   },
+   "food": {
+    "mean": 0.8374999999999999,
+    "lo": 0.525,
+    "hi": 1.150156249999999,
+    "n": 8,
+    "median": 0.875
+   },
+   "poison": {
+    "mean": 0.23124999999999998,
+    "lo": 0.1375,
+    "hi": 0.33125,
+    "n": 8,
+    "median": 0.225
+   },
+   "mean_drive": {
+    "mean": 0.3690675,
+    "lo": 0.33278425,
+    "hi": 0.40712418749999996,
+    "n": 8,
+    "median": 0.37146500000000005
+   },
+   "poison_bites_after_first": {
+    "mean": 3.625,
+    "lo": 1.75,
+    "hi": 5.625,
+    "n": 8,
+    "median": 3.5
+   }
+  },
+  "ebm-lr0.05-ep10": {
+   "ticks_alive": {
+    "mean": 1087.625,
+    "lo": 763.359375,
+    "hi": 1571.25,
+    "n": 8,
+    "median": 892.5
+   },
+   "days": {
+    "mean": 2.5,
+    "lo": 1.5,
+    "hi": 3.875,
+    "n": 8,
+    "median": 2.0
+   },
+   "food": {
+    "mean": 0.8250000000000001,
+    "lo": 0.34375,
+    "hi": 1.5501562499999992,
+    "n": 8,
+    "median": 0.55
+   },
+   "poison": {
+    "mean": 0.2375,
+    "lo": 0.11875000000000001,
+    "hi": 0.36875,
+    "n": 8,
+    "median": 0.125
+   },
+   "mean_drive": {
+    "mean": 0.39688124999999996,
+    "lo": 0.37251640624999993,
+    "hi": 0.42600465625,
+    "n": 8,
+    "median": 0.38605500000000004
+   },
+   "poison_bites_after_first": {
+    "mean": 3.75,
+    "lo": 1.375,
+    "hi": 6.375,
+    "n": 8,
+    "median": 1.5
+   }
+  },
+  "ebm-lr0.2-ep3": {
+   "ticks_alive": {
+    "mean": 1797.75,
+    "lo": 805.375,
+    "hi": 2976.1062499999994,
+    "n": 8,
+    "median": 965.5
+   },
+   "days": {
+    "mean": 4.75,
+    "lo": 1.875,
+    "hi": 8.25,
+    "n": 8,
+    "median": 2.0
+   },
+   "food": {
+    "mean": 2.13125,
+    "lo": 0.40625,
+    "hi": 4.325,
+    "n": 8,
+    "median": 0.65
+   },
+   "poison": {
+    "mean": 0.38125,
+    "lo": 0.1625,
+    "hi": 0.625,
+    "n": 8,
+    "median": 0.275
+   },
+   "mean_drive": {
+    "mean": 0.35846374999999997,
+    "lo": 0.29112759374999997,
+    "hi": 0.42195949999999993,
+    "n": 8,
+    "median": 0.37773999999999996
+   },
+   "poison_bites_after_first": {
+    "mean": 6.75,
+    "lo": 2.496875,
+    "hi": 11.5,
+    "n": 8,
+    "median": 4.5
+   }
+  },
+  "ebm-lr0.2-ep10": {
+   "ticks_alive": {
+    "mean": 1073.375,
+    "lo": 721.246875,
+    "hi": 1469.1562499999998,
+    "n": 8,
+    "median": 784.0
+   },
+   "days": {
+    "mean": 2.625,
+    "lo": 1.625,
+    "hi": 3.75,
+    "n": 8,
+    "median": 2.0
+   },
+   "food": {
+    "mean": 0.7937500000000001,
+    "lo": 0.28109375000000003,
+    "hi": 1.3812499999999999,
+    "n": 8,
+    "median": 0.35
+   },
+   "poison": {
+    "mean": 0.18125,
+    "lo": 0.06875,
+    "hi": 0.29375,
+    "n": 8,
+    "median": 0.1
+   },
+   "mean_drive": {
+    "mean": 0.34814375,
+    "lo": 0.29532490625,
+    "hi": 0.4082828125,
+    "n": 8,
+    "median": 0.338525
+   },
+   "poison_bites_after_first": {
+    "mean": 2.875,
+    "lo": 0.875,
+    "hi": 5.125,
+    "n": 8,
+    "median": 1.0
+   }
+  },
+  "ebm-lr0.5-ep3": {
+   "ticks_alive": {
+    "mean": 1433.0,
+    "lo": 925.0,
+    "hi": 1954.0,
+    "n": 8,
+    "median": 1242.5
+   },
+   "days": {
+    "mean": 3.75,
+    "lo": 2.375,
+    "hi": 5.25,
+    "n": 8,
+    "median": 3.5
+   },
+   "food": {
+    "mean": 1.6062500000000002,
+    "lo": 0.55609375,
+    "hi": 2.8875,
+    "n": 8,
+    "median": 1.0
+   },
+   "poison": {
+    "mean": 0.2125,
+    "lo": 0.09375,
+    "hi": 0.34375,
+    "n": 8,
+    "median": 0.175
+   },
+   "mean_drive": {
+    "mean": 0.32692875,
+    "lo": 0.24384940625,
+    "hi": 0.4034841249999998,
+    "n": 8,
+    "median": 0.34209500000000004
+   },
+   "poison_bites_after_first": {
+    "mean": 3.375,
+    "lo": 1.125,
+    "hi": 5.875,
+    "n": 8,
+    "median": 2.5
+   }
+  },
+  "ebm-lr0.5-ep10": {
+   "ticks_alive": {
+    "mean": 1209.5,
+    "lo": 803.103125,
+    "hi": 1846.9125,
+    "n": 8,
+    "median": 918.5
+   },
+   "days": {
+    "mean": 3.0,
+    "lo": 1.875,
+    "hi": 4.75,
+    "n": 8,
+    "median": 2.0
+   },
+   "food": {
+    "mean": 0.9874999999999999,
+    "lo": 0.375,
+    "hi": 1.95,
+    "n": 8,
+    "median": 0.6
+   },
+   "poison": {
+    "mean": 0.225,
+    "lo": 0.09375,
+    "hi": 0.36250000000000004,
+    "n": 8,
+    "median": 0.175
+   },
+   "mean_drive": {
+    "mean": 0.38833375000000003,
+    "lo": 0.34327625,
+    "hi": 0.43482868750000003,
+    "n": 8,
+    "median": 0.38691
+   },
+   "poison_bites_after_first": {
+    "mean": 3.625,
+    "lo": 1.1218750000000002,
+    "hi": 6.375,
+    "n": 8,
+    "median": 2.5
+   }
+  },
+  "tabular_q": {
+   "ticks_alive": {
+    "mean": 4135.625,
+    "lo": 2934.0,
+    "hi": 5250.0,
+    "n": 8,
+    "median": 5250.0
+   },
+   "days": {
+    "mean": 11.625,
+    "lo": 8.0,
+    "hi": 15.0,
+    "n": 8,
+    "median": 15.0
+   },
+   "food": {
+    "mean": 11.4,
+    "lo": 6.58125,
+    "hi": 15.718749999999998,
+    "n": 8,
+    "median": 12.825
+   },
+   "poison": {
+    "mean": 1.1625,
+    "lo": 0.57484375,
+    "hi": 1.80625,
+    "n": 8,
+    "median": 1.225
+   },
+   "mean_drive": {
+    "mean": 0.14526999999999998,
+    "lo": 0.03723715625,
+    "hi": 0.27122571874999996,
+    "n": 8,
+    "median": 0.058175
+   },
+   "poison_bites_after_first": {
+    "mean": 22.375,
+    "lo": 10.746875,
+    "hi": 35.12812499999998,
+    "n": 8,
+    "median": 23.5
+   }
+  }
+ }
+}

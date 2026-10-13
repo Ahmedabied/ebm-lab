@@ -124,3 +124,15 @@ def test_xor_world_has_two_poison_blends_and_books_close():
         before = w.field_mass(); e0, d0 = w.ledger.emitted, w.ledger.decayed
         w.step()
         assert abs((w.field_mass() - before) - ((w.ledger.emitted - e0) - (w.ledger.decayed - d0))) < 1e-3
+
+
+def test_senses_contrast_is_bounded_and_signed():
+    from creature.senses import Senses, SenseConfig
+    w = World(WorldConfig(H=16, W=16, n_poison=0, food_budget=1.0, food_mass=2.0), np.random.default_rng(6))
+    for _ in range(60): w.step()
+    assert len(w.pos) == 1
+    y, x = w.pos[0]                       # the ONE food item; stand 2 cells to its left, face +y
+    s = Senses(SenseConfig(noise=0.0))
+    out = s.sense(w, float(y), float(x) - 2.0, np.pi / 2, np.array([0.8, 0.0], np.float32))
+    assert np.all(np.abs(out["contrast"]) <= 1.0)
+    assert out["contrast"][0] < 0          # facing up with food on the right: right antenna reads more A
