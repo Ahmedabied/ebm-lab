@@ -13,6 +13,8 @@ class SenseConfig:
     antenna_angle: float = np.deg2rad(45.0)
     antenna_len: float = 1.5
     c0: float = 0.05           # log-compression scale: x = log1p(c / c0)
+    noise: float = 0.02        # Gaussian noise on each antenna reading (log units). R2: without
+                               # noise, steering is trivially easy; real sensors are noisy.
 
 
 class Senses:
@@ -26,11 +28,15 @@ class Senses:
         return ((y + c.antenna_len * np.sin(aL), x + c.antenna_len * np.cos(aL)),
                 (y + c.antenna_len * np.sin(aR), x + c.antenna_len * np.cos(aR)))
 
-    def sense(self, world, y: float, x: float, heading: float, body: np.ndarray) -> dict:
+    def sense(self, world, y: float, x: float, heading: float, body: np.ndarray,
+              rng: np.random.Generator | None = None) -> dict:
         """Returns a structured sensation and its flat vector x (DIM,)."""
         (yl, xl), (yr, xr) = self.antennae(y, x, heading)
         left = np.log1p(world.read(yl, xl) / self.cfg.c0).astype(np.float32)
         right = np.log1p(world.read(yr, xr) / self.cfg.c0).astype(np.float32)
+        if rng is not None and self.cfg.noise > 0:
+            left = left + rng.normal(0, self.cfg.noise, NOTES).astype(np.float32)
+            right = right + rng.normal(0, self.cfg.noise, NOTES).astype(np.float32)
         mean = 0.5 * (left + right)
         change = mean - self.prev_mean
         self.prev_mean = mean

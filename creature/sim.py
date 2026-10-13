@@ -22,12 +22,12 @@ class SimConfig:
     label: str = "smoke"
     policy: str = "ebm"            # ebm | random | braitenberg | oracle | tabular_q
     days: int = 20
-    day_len: int = 400
+    day_len: int = 300             # EXP-00 calibration (decisions/0001)
     sleep_len: int = 50            # ticks the body metabolises while asleep
     turn: float = np.deg2rad(30.0)
     speed: float = 1.0
     # learning
-    lam: float = 0.9               # eligibility decay (credit for the meal that follows)
+    lam: float = 0.95              # credit decay: R_t = Σ λ^k r_{t+k}; ~20 ticks of look-ahead
     day_learning: bool = False     # online REINFORCE with an eligibility trace (matched control)
     day_lr: float = 0.05
     sleep: str = "replay"          # replay | today | noise | none
@@ -37,7 +37,7 @@ class SimConfig:
     cache_days: int = 3
     # growth
     growth: str = "surprise"       # surprise | timer | none
-    growth_thresh: float = 0.05    # mean |R| over the day above this -> still surprised -> grow
+    growth_thresh: float = 0.005   # std of the day's raw lessons above this -> eventful day -> grow
     growth_every: int = 3          # for timer: grow every N days
     growth_max: int = 32
     # log
@@ -72,27 +72,34 @@ class Cache:
     """The day's episodes: what was sensed, what was done, what the body said."""
     def __init__(self):
         self.days: list[tuple[np.ndarray, np.ndarray, np.ndarray]] = []   # (X, a, R) per day
-        self.X, self.a, self.r = [], [], []
-    def push(self, x, a, r):
-        self.X.append(x); self.a.append(a); self.r.append(r)
+        self.X, self.a, self.r, self.lp = [], [], [], []
+    def push(self, x, a, r, logp):
+        self.X.append(x); self.a.append(a); self.r.append(r); self.lp.append(logp)
     def close_day(self, lam: float, keep_days: int):
-        """Turn raw lessons r_t into credited lessons R_t = Σ λ^k r_{t+k}, baseline-subtracted."""
+        """Turn raw lessons r_t into credited lessons R_t = Σ λ^k r_{t+k}, baseline-subtracted.
+        The tail is bootstrapped with the day's mean lesson continuing forever (mean_r/(1-λ)), so
+        the last ticks of a day are not credited as if the metabolic drift had stopped."""
         if not self.r:
             return 0.0
         r = np.array(self.r, dtype=np.float64)
-        R = np.zeros_like(r); acc = 0.0
+        R = np.zeros_like(r); acc = r.mean() / (1.0 - lam)
         for t in range(len(r) - 1, -1, -1):
             acc = r[t] + lam * acc; R[t] = acc
         R -= R.mean()
-        self.days.append((np.array(self.X), np.array(self.a), R))
+        sd = R.std()
+        if sd < 1e-6:                  # a day in which nothing happened teaches nothing
+            R[:] = 0.0
+        else:                          # advantage normalisation: the body's lessons are O(0.01),
+            R /= max(sd, 1e-3)         # the policy needs O(1) energy gaps; scale-free updates
+        self.days.append((np.array(self.X), np.array(self.a), R, np.array(self.lp, dtype=np.float64)))
         self.days = self.days[-keep_days:]
-        self.X, self.a, self.r = [], [], []
-        return float(np.abs(R).mean())
+        self.X, self.a, self.r, self.lp = [], [], [], []
+        # "surprise" for the growth trigger: how spiky the day's raw lessons were (std of r, in
+        # drive units), i.e. how much happened that the body cared about
+        return float(r.std())
     def batch_source(self, today_only: bool):
         days = self.days[-1:] if today_only else self.days
-        X = np.concatenate([d[0] for d in days]); a = np.concatenate([d[1] for d in days])
-        R = np.concatenate([d[2] for d in days])
-        return X, a, R
+        return tuple(np.concatenate([d[i] for d in days]) for i in range(4))
 
 
 class Life:
@@ -108,6 +115,7 @@ class Life:
         self.policy = None if self.brain else baselines.make(cfg.policy, self.rng)
         self.cache = Cache()
         self.trace = None
+        self.instr = {}
         self.rbar = 0.0                    # running baseline for online learning
         self.t = 0; self.day = 0
         self.dir = os.path.join(cfg.runs_dir, cfg.label, str(cfg.seed))
@@ -136,16 +144,16 @@ class Life:
 
     # ---- one waking tick -------------------------------------------------------------------
     def wake_tick(self):
-        sens = self.senses.sense(self.world, self.y, self.x, self.heading, self.body.state())
+        sens = self.senses.sense(self.world, self.y, self.x, self.heading, self.body.state(), self.rng)
         x = sens["x"]
         if self.brain:
-            a, Fx = self.brain.act(x, self.rng)
+            a, Fx, logp = self.brain.act(x, self.rng)
         else:
-            a, Fx = self.policy.act(sens, self.world, self.y, self.x, self.heading, self.rng)
+            a, Fx = self.policy.act(sens, self.world, self.y, self.x, self.heading, self.rng); logp = 0.0
         self.move(a)
         food, poison = self.world.eat_at(self.y, self.x)
         r = self.body.tick(True, self.n_units(), food, poison)
-        self.cache.push(x, a, r)
+        self.cache.push(x, a, r, logp)
         if self.brain and self.cfg.day_learning:
             self.online_learn(x, a, r)
         if self.policy is not None:
@@ -220,18 +228,23 @@ class Life:
                     or (c.growth == "timer" and (self.day + 1) % c.growth_every == 0))
             if grow:
                 self.brain.add_units(1, self.rng); self.event("grow", H=self.n_units())
+                self.trace = None          # the online eligibility trace must match the new shape
         if self.brain: self._brains.append(self.brain.snapshot())
-        self.event("sleep_end", H=self.n_units())
+        self.event("sleep_end", H=self.n_units(), **getattr(self, "instr", {}))
 
     def _replay(self, today_only: bool):
+        """Interleaved replay: every cached day shuffled together, importance-corrected."""
         c = self.cfg
-        X, a, R = self.cache.batch_source(today_only)
-        n = len(a)
+        X, a, R, lp = self.cache.batch_source(today_only)
+        n = len(a); clipped = []
         for _ in range(c.sleep_epochs):
             order = self.rng.permutation(n)
             for i in range(0, n, c.batch):
                 idx = order[i:i + c.batch]
-                self.brain.learn(X[idx], a[idx], R[idx])
+                clipped.append(self.brain.learn(X[idx], a[idx], R[idx], logp_old=lp[idx]))
+        self.instr = {"clip_frac": round(float(np.mean(clipped)), 4),
+                      "entropy": round(self.brain.entropy(X), 4),
+                      "w_norm": round(float(np.sqrt(sum((self.brain.theta[k] ** 2).sum() for k in ("w", "u", "v")))), 4)}
 
     # ---- the life --------------------------------------------------------------------------
     def run(self) -> dict:

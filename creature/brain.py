@@ -27,7 +27,8 @@ class BrainConfig:
     H0: int = 4
     T: float = 1.0
     lr: float = 0.05
-    init_scale: float = 0.1
+    init_scale: float = 0.01       # near-uniform policy at birth (pilot 01: a turning bias traps
+                                   # an untrained creature in loops; see findings)
 
 
 def _softplus(z):
@@ -70,12 +71,21 @@ class Brain:
         p = np.exp(z)
         return p / p.sum(axis=1, keepdims=True)
 
-    def act(self, x: np.ndarray, rng: np.random.Generator) -> tuple[int, np.ndarray]:
-        """Sample an action. Returns (a, F(x, ·)) so the log can show the three energies."""
+    def act(self, x: np.ndarray, rng: np.random.Generator) -> tuple[int, np.ndarray, float]:
+        """Sample an action. Returns (a, F(x, ·), log π(a|x)); the log-prob is cached so that
+        sleep replay can correct for the policy having moved since (off-policy ratio)."""
         Fx = self.F(x[None, :])[0]
         p = self.policy(x[None, :])[0]
         a = int(rng.choice(A, p=p))
-        return a, Fx
+        return a, Fx, float(np.log(p[a]))
+
+    def logp(self, X: np.ndarray, a: np.ndarray) -> np.ndarray:
+        P = self.policy(X)
+        return np.log(P[np.arange(len(a)), a])
+
+    def entropy(self, X: np.ndarray) -> float:
+        P = self.policy(X)
+        return float(-(P * np.log(P + 1e-12)).sum(axis=1).mean())
 
     # ---- learning --------------------------------------------------------------------------
     def grad_logpi(self, X: np.ndarray, a: np.ndarray) -> dict:
@@ -98,26 +108,41 @@ class Brain:
         g["u"] = g["c"][:, :, None] * X[:, None, :]          # (N, H, dim)
         return g
 
-    def learn(self, X: np.ndarray, a: np.ndarray, R: np.ndarray, lr: float | None = None):
-        """One contrastive update on a batch of (sensation, action, lesson)."""
+    def learn(self, X: np.ndarray, a: np.ndarray, R: np.ndarray, lr: float | None = None,
+              logp_old: np.ndarray | None = None, clip: float = 0.2) -> float:
+        """One contrastive update on a batch of (sensation, action, lesson).
+        If logp_old is given (sleep replay), each sample is weighted by the clipped importance
+        ratio π_now(a|x)/π_old(a|x) ∈ [1-clip, 1+clip] (PPO-style; R1 research/03 §Q2).
+        Returns the fraction of samples whose ratio was clipped (an instrument)."""
         lr = self.cfg.lr if lr is None else lr
         g = self.grad_logpi(X, a)
         N = X.shape[0]
+        clipped = 0.0
+        if logp_old is not None:
+            rho = np.exp(self.logp(X, a) - logp_old)
+            clipped = float(((rho < 1 - clip) | (rho > 1 + clip)).mean())
+            R = R * np.clip(rho, 1 - clip, 1 + clip)
         for k in self.theta:
             self.theta[k] += lr * np.tensordot(R, g[k], axes=(0, 0)) / N
+        return clipped
 
     def downscale(self, delta: float):
-        """Sleep's synaptic downscaling: shrink every weight a little (biases included)."""
-        for k in self.theta:
+        """Sleep's synaptic downscaling: shrink the connections (w, u, v) a little. Biases b and c
+        are left alone: decaying b pulls the policy toward uniform, decaying c shifts every hidden
+        unit's offset (R1, research/03 §Q5)."""
+        for k in ("w", "u", "v"):
             self.theta[k] *= (1.0 - delta)
 
     # ---- growth ----------------------------------------------------------------------------
     def add_units(self, n: int, rng: np.random.Generator):
+        """Born policy-neutral: v = 0 means the new unit adds the same term to every action's
+        energy, so the policy is unchanged at birth (R1, research/03 §Q5). It only starts to
+        matter once learning gives it an action preference."""
         s = self.cfg.init_scale
         th = self.theta
         th["c"] = np.concatenate([th["c"], np.zeros(n)])
         th["u"] = np.vstack([th["u"], rng.normal(0, s, (n, self.cfg.dim))])
-        th["v"] = np.vstack([th["v"], rng.normal(0, s, (n, A))])
+        th["v"] = np.vstack([th["v"], np.zeros((n, A))])
 
     def snapshot(self) -> dict:
         return {k: v.copy() for k, v in self.theta.items()}

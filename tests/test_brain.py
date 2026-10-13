@@ -67,7 +67,7 @@ def test_growth_adds_units_and_keeps_old_behaviour_close():
     X = rng.normal(size=(8, DIM)); P0 = br.policy(X)
     br.add_units(3, rng)
     assert br.H == 5 and br.theta["u"].shape == (5, DIM) and br.theta["v"].shape == (5, A)
-    assert np.abs(br.policy(X) - P0).max() < 0.2   # small random units nudge, don't overwrite
+    assert np.allclose(br.policy(X), P0)            # born policy-neutral (v = 0): identical policy
 
 
 def test_same_seed_same_brain_same_actions():
@@ -76,3 +76,24 @@ def test_same_seed_same_brain_same_actions():
         br = Brain(BrainConfig(dim=DIM), rng)
         return [br.act(rng.normal(size=DIM), rng)[0] for _ in range(30)]
     assert run(9) == run(9) and run(9) != run(10)
+
+
+def test_importance_ratio_is_one_when_policy_unchanged_and_clips_when_it_moved():
+    rng = np.random.default_rng(5)
+    br = Brain(BrainConfig(dim=DIM, lr=0.0), rng)
+    X = rng.normal(size=(6, DIM)); a = np.array([0, 1, 2, 0, 1, 2])
+    lp = br.logp(X, a)
+    assert br.learn(X, a, np.ones(6), logp_old=lp) == 0.0
+    br.theta["b"][0] += 5.0
+    assert br.learn(X, a, np.ones(6), logp_old=lp) > 0.0
+
+
+def test_constant_lesson_teaches_nothing_even_at_day_end():
+    """The tail bootstrap: a day of constant drift must give zero credit everywhere."""
+    from creature.sim import Cache
+    c = Cache()
+    for t in range(100):
+        c.push(np.zeros(DIM), 0, -0.01, 0.0)
+    c.close_day(0.95, 3)
+    R = c.days[-1][2]
+    assert np.abs(R).max() < 1e-9

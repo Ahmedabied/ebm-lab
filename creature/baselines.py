@@ -65,7 +65,7 @@ class TabularQ:
     name = "tabular_q"
     def __init__(self, rng, alpha=0.1, gamma=0.9, eps=0.1, dead=0.02):
         self.alpha, self.gamma, self.eps, self.dead = alpha, gamma, eps, dead
-        self.Q = np.zeros((54, A)); self.prev = None
+        self.Q = rng.normal(0, 1e-3, (54, A)); self.prev = None   # tiny noise breaks argmax ties
     def _state(self, sens):
         s = 0
         for k in range(3):

@@ -102,7 +102,7 @@ def test_eating_lowers_drive_and_poison_raises_it():
 
 def test_starvation_kills_and_toxin_drains():
     b = Body(BodyConfig(E0=0.01))
-    for _ in range(10): b.tick(False, 0, 0.0, 0.0)
+    for _ in range(100): b.tick(False, 0, 0.0, 0.0)
     assert not b.alive and b.E == 0.0
     b2 = Body(BodyConfig()); b2.X = 1.0
     e0 = b2.E; b2.tick(False, 0, 0.0, 0.0)
@@ -113,3 +113,14 @@ def test_growth_is_paid_for():
     a = Body(BodyConfig()); b = Body(BodyConfig())
     a.tick(False, 0, 0, 0); b.tick(False, 10, 0, 0)
     assert b.E < a.E
+
+
+def test_xor_world_has_two_poison_blends_and_books_close():
+    from creature.world import POISON
+    w = World(WorldConfig(H=16, W=16, blend_mode="xor", n_poison=4), np.random.default_rng(5))
+    pb = w.blend[w.kind == POISON]
+    assert len(np.unique(pb, axis=0)) == 2 and (pb.sum(axis=1) == 1).all()
+    for _ in range(30):
+        before = w.field_mass(); e0, d0 = w.ledger.emitted, w.ledger.decayed
+        w.step()
+        assert abs((w.field_mass() - before) - ((w.ledger.emitted - e0) - (w.ledger.decayed - d0))) < 1e-3

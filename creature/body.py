@@ -11,9 +11,9 @@ import numpy as np
 
 @dataclass
 class BodyConfig:
-    E0: float = 0.6              # starting energy
+    E0: float = 0.8              # starting energy (EXP-00 calibration, decisions/0001)
     E_max: float = 1.0
-    metabolic: float = 0.002     # energy per tick, resting
+    metabolic: float = 0.0005    # energy per tick, resting (EXP-00 calibration, decisions/0001)
     move_cost: float = 0.001     # extra per tick when moving
     unit_cost: float = 0.0002    # per hidden unit per tick (growth is paid for)
     yield_: float = 1.0          # energy per unit food mass

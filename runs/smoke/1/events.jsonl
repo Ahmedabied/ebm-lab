@@ -1,3 +1,20 @@
-{"t": 140, "day": 0, "kind": "eat", "food": 0.05}
-{"t": 141, "day": 0, "kind": "eat", "food": 0.05}
-{"t": 185, "day": 0, "kind": "death", "E": 0.0}
+{"t": 51, "day": 0, "kind": "eat", "food": 0.05}
+{"t": 59, "day": 0, "kind": "eat", "food": 0.05}
+{"t": 60, "day": 0, "kind": "eat", "food": 0.05}
+{"t": 127, "day": 0, "kind": "eat", "food": 0.05}
+{"t": 128, "day": 0, "kind": "eat", "food": 0.05}
+{"t": 215, "day": 0, "kind": "eat", "food": 0.05}
+{"t": 216, "day": 0, "kind": "eat", "food": 0.05}
+{"t": 320, "day": 0, "kind": "eat", "food": 0.05}
+{"t": 321, "day": 0, "kind": "eat", "food": 0.05}
+{"t": 336, "day": 0, "kind": "eat", "food": 0.05}
+{"t": 337, "day": 0, "kind": "eat", "food": 0.05}
+{"t": 344, "day": 0, "kind": "eat", "food": 0.05}
+{"t": 400, "day": 0, "kind": "sleep_start", "surprise": 0.02088, "H": 4}
+{"t": 450, "day": 0, "kind": "sleep_end", "H": 4, "clip_frac": 0.0, "entropy": 1.096, "w_norm": 0.8779}
+{"t": 519, "day": 1, "kind": "eat", "food": 0.05}
+{"t": 520, "day": 1, "kind": "eat", "food": 0.05}
+{"t": 540, "day": 1, "kind": "poison", "poison": 0.05}
+{"t": 541, "day": 1, "kind": "poison", "poison": 0.05}
+{"t": 629, "day": 1, "kind": "poison", "poison": 0.05}
+{"t": 662, "day": 1, "kind": "death", "E": 0.0}

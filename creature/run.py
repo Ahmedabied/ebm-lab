@@ -16,10 +16,12 @@ def main():
     p.add_argument("--H0", type=int, default=4)
     p.add_argument("--T", type=float, default=1.0)
     p.add_argument("--lr", type=float, default=0.05)
+    p.add_argument("--blend", default="linear", choices=["linear", "xor"])
     a = p.parse_args()
     cfg = SimConfig(seed=a.seed, label=a.label, policy=a.policy, days=a.days, day_len=a.day_len,
                     sleep=a.sleep, growth=a.growth, day_learning=a.day_learning)
     cfg.brain.H0 = a.H0; cfg.brain.T = a.T; cfg.brain.lr = a.lr
+    cfg.world.blend_mode = a.blend
     s = Life(cfg).run()
     print(json.dumps(s))
 

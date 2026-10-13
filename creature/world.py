@@ -10,9 +10,19 @@ from . import physics
 
 NOTES = 3                      # chemical notes A, B, C
 FOOD, POISON = 0, 1            # item kinds (world bookkeeping only)
-BLEND = np.array([[1.0, 1.0, 0.0],      # food   emits A+B
-                  [0.0, 1.0, 1.0]],     # poison emits B+C   (shares B with food, on purpose)
-                 dtype=np.float32)
+
+# Blend tables: what each item kind smells like. Two worlds (R2, research/04 §Q7):
+#   linear: food = A+B, poison = B+C. Solvable from A and C alone; B carries no information.
+#           Tests valence learning + steering. A linear brain can do it.
+#   xor:    food = A+B TOGETHER; poison = A alone or B alone. "The blend is the food, the pure
+#           notes are poison." No linear rule solves it: it needs a unit that reads the conjunction.
+#           This is the world where "chemistry blends" actually matters.
+BLENDS = {
+    "linear": {FOOD: [np.array([1.0, 1.0, 0.0], np.float32)],
+               POISON: [np.array([0.0, 1.0, 1.0], np.float32)]},
+    "xor":    {FOOD: [np.array([1.0, 1.0, 0.0], np.float32)],
+               POISON: [np.array([1.0, 0.0, 0.0], np.float32), np.array([0.0, 1.0, 0.0], np.float32)]},
+}
 
 
 @dataclass
@@ -22,12 +32,13 @@ class WorldConfig:
     alpha: float = 0.18          # diffusion coefficient per tick
     keep: float = 0.95           # fraction of each field kept per tick
     emit_rate: float = 0.05      # field mass emitted per tick per unit of item mass
-    food_budget: float = 6.0     # regrow when total food mass is below this
+    food_budget: float = 24.0    # regrow when total food mass is below this (EXP-00, decisions/0001)
     food_mass: float = 2.0       # mass of a new food item
     n_poison: int = 4            # permanent poison items
     poison_mass: float = 2.0     # emission strength of a poison item (never depleted)
     eat_radius: float = 1.0      # cells
     bite: float = 0.05           # mass per tick a body can take from an item in reach
+    blend_mode: str = "linear"   # linear | xor  (see BLENDS)
 
 
 @dataclass
@@ -50,18 +61,21 @@ class World:
         self.kind = np.zeros(0, dtype=np.int32)
         self.pos = np.zeros((0, 2), dtype=np.float32)     # (y, x) cell centres
         self.mass = np.zeros(0, dtype=np.float32)
+        self.blend = np.zeros((0, NOTES), dtype=np.float32)  # what each item emits
+        self.blends = BLENDS[cfg.blend_mode]
         self.ledger = Ledger()
-        for _ in range(cfg.n_poison):
-            self._spawn(POISON, cfg.poison_mass)
+        for i in range(cfg.n_poison):
+            self._spawn(POISON, cfg.poison_mass, variant=i % len(self.blends[POISON]))
         self.regrow()
 
     # ---- items ----------------------------------------------------------------------------
-    def _spawn(self, kind: int, mass: float):
+    def _spawn(self, kind: int, mass: float, variant: int = 0):
         y = self.rng.integers(self.cfg.H) + 0.5
         x = self.rng.integers(self.cfg.W) + 0.5
         self.kind = np.append(self.kind, kind)
         self.pos = np.vstack([self.pos, [[y, x]]]).astype(np.float32)
         self.mass = np.append(self.mass, np.float32(mass))
+        self.blend = np.vstack([self.blend, self.blends[kind][variant][None, :]]).astype(np.float32)
         if kind == FOOD:
             self.ledger.created += mass
 
@@ -75,7 +89,8 @@ class World:
 
     def _remove(self, idx: np.ndarray):
         keep = np.ones(len(self.kind), dtype=bool); keep[idx] = False
-        self.kind, self.pos, self.mass = self.kind[keep], self.pos[keep], self.mass[keep]
+        self.kind, self.pos, self.mass, self.blend = (self.kind[keep], self.pos[keep],
+                                                      self.mass[keep], self.blend[keep])
 
     # ---- physics step ----------------------------------------------------------------------
     def step(self):
@@ -86,8 +101,8 @@ class World:
         f = physics.decay(f, c.keep)
         self.ledger.decayed += before - float(f.sum())
         # emit: each item adds blend * mass * emit_rate at its cell
-        for k, (y, x), m in zip(self.kind, self.pos, self.mass):
-            e = BLEND[k] * m * c.emit_rate
+        for bl, (y, x), m in zip(self.blend, self.pos, self.mass):
+            e = bl * m * c.emit_rate
             f[:, int(y), int(x)] += e
             self.ledger.emitted += float(e.sum())
         self.fields = f

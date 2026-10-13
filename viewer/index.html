@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EBM Run Viewer</title>
+<style>
+  :root {
+    --bg: #0e1117; --panel: #161b24; --panel2: #1c2230; --line: #2a3242;
+    --text: #e6e9ef; --dim: #8b93a5; --faint: #5a6273;
+    --accent: #7cc4ff; --eat: #5ee07a; --poison: #ff5fd2; --night: #26304a;
+    --E: #f4c84a; --X: #ff7a59; --D: #7cc4ff; --chosen: #ffffff; --low: #5ee07a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font: 13px/1.4 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  header { padding: 10px 16px 8px; border-bottom: 1px solid var(--line); background: var(--panel); }
+  header h1 { font-size: 15px; margin: 0 0 4px; font-weight: 600; }
+  header h1 .sep { color: var(--faint); margin: 0 6px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .chip { background: var(--panel2); border: 1px solid var(--line); border-radius: 4px; padding: 1px 7px; color: var(--dim); }
+  .chip b { color: var(--text); font-weight: 600; }
+  .chip.bad b { color: #ff7a7a; } .chip.good b { color: var(--eat); }
+  details { margin-top: 6px; color: var(--dim); }
+  details pre { max-height: 260px; overflow: auto; background: var(--bg); padding: 8px; border: 1px solid var(--line); font-size: 11px; }
+  main { display: grid; grid-template-columns: 548px minmax(0, 1fr); gap: 12px; padding: 12px 16px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px; }
+  .panel h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); margin: 0 0 8px; font-weight: 600; }
+  .panel h2 small { text-transform: none; letter-spacing: 0; color: var(--faint); font-weight: 400; margin-left: 6px; }
+  .right { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  canvas { display: block; }
+  #world { border-radius: 4px; cursor: default; }
+  .controls { display: flex; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  button, select { background: var(--panel2); color: var(--text); border: 1px solid var(--line); border-radius: 4px; padding: 4px 9px; font: inherit; cursor: pointer; }
+  button:hover, select:hover { border-color: var(--accent); }
+  #play { min-width: 64px; }
+  #scrub { width: 100%; margin: 8px 0 2px; accent-color: var(--accent); }
+  .readout { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; gap: 8px; }
+  #daybadge { font-weight: 600; padding: 2px 8px; border-radius: 4px; }
+  #daybadge.day { background: #3a3218; color: #ffd76a; }
+  #daybadge.night { background: var(--night); color: #a9b8ff; }
+  .legend { display: flex; gap: 12px; margin-top: 8px; color: var(--dim); font-size: 12px; flex-wrap: wrap; }
+  .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 4px; }
+  .bars { display: grid; grid-template-columns: 58px 1fr 120px; gap: 4px 8px; align-items: center; }
+  .bar { height: 12px; background: var(--panel2); border-radius: 3px; overflow: hidden; }
+  .bar > div { height: 100%; }
+  .val { text-align: right; color: var(--dim); }
+  .row2 { display: grid; grid-template-columns: minmax(0, 1fr) 240px; gap: 12px; }
+  .note { color: var(--faint); font-size: 12px; }
+  #status { padding: 40px; color: var(--dim); }
+  #status code { color: var(--text); }
+  .err { color: #ff8a8a; }
+  #ftable { display: grid; grid-template-columns: 74px 1fr 64px 60px 58px; gap: 4px 8px; align-items: center; }
+  #ftable .name { font-weight: 600; }
+  #ftable .bar { height: 16px; }
+  .pill { font-size: 11px; padding: 0 6px; border-radius: 8px; border: 1px solid var(--chosen); color: var(--chosen); justify-self: start; }
+  .lowtag { color: var(--low); }
+  #heatstrip { overflow-x: auto; }
+  .kbd { border: 1px solid var(--line); border-radius: 3px; padding: 0 4px; color: var(--dim); font-size: 11px; }
+</style>
+</head>
+<body>
+<div id="status">Loading...</div>
+<div id="app" hidden>
+  <header>
+    <h1 id="title"></h1>
+    <div class="chips" id="chips"></div>
+    <details><summary>full config, world ledger, export info</summary><pre class="mono" id="cfg"></pre></details>
+  </header>
+  <main>
+    <section class="panel">
+      <h2>World <small id="worldnote"></small></h2>
+      <canvas id="world"></canvas>
+      <div class="legend">
+        <span><span class="sw" style="background:#ffff40"></span>A+B (food blend)</span>
+        <span><span class="sw" style="background:#40ffff"></span>B+C (poison blend)</span>
+        <span><span class="sw" style="background:#ff3030"></span>A</span>
+        <span><span class="sw" style="background:#30ff30"></span>B</span>
+        <span><span class="sw" style="background:#3060ff"></span>C</span>
+        <span><span class="sw" style="background:#ff9b3d"></span>left antenna</span>
+        <span><span class="sw" style="background:#7cc4ff"></span>right antenna</span>
+      </div>
+      <div class="readout">
+        <span id="daybadge" class="day">DAY 0</span>
+        <span id="tread" class="mono"></span>
+      </div>
+      <input type="range" id="scrub" min="0" max="0" value="0" step="1">
+      <canvas id="strip"></canvas>
+      <div class="controls">
+        <button id="first" title="Home">|&lt;</button>
+        <button id="back" title="Left arrow">&lt;</button>
+        <button id="play" title="Space">Play</button>
+        <button id="fwd" title="Right arrow">&gt;</button>
+        <button id="last" title="End">&gt;|</button>
+        <label class="note">speed
+          <select id="speed">
+            <option value="5">5 t/s</option><option value="15">15 t/s</option>
+            <option value="30">30 t/s</option><option value="60" selected>60 t/s</option>
+            <option value="120">120 t/s</option><option value="240">240 t/s</option>
+            <option value="480">480 t/s</option><option value="960">960 t/s</option>
+          </select></label>
+        <label class="note"><input type="checkbox" id="smooth"> smooth field</label>
+        <label class="note"><input type="checkbox" id="trailon" checked> trail</label>
+      </div>
+      <div class="note" style="margin-top:6px">
+        <span class="kbd">space</span> play/pause &nbsp; <span class="kbd">&larr;</span><span class="kbd">&rarr;</span> step 1
+        &nbsp; <span class="kbd">shift</span>+arrows step 10 &nbsp; <span class="kbd">home</span>/<span class="kbd">end</span>
+      </div>
+    </section>
+
+    <div class="right">
+      <section class="panel">
+        <h2>Body <small>energy, toxin, drive = distance from setpoints (the only teacher is its change)</small></h2>
+        <div class="bars">
+          <span>Energy E</span><div class="bar"><div id="bE" style="background:var(--E)"></div></div><span class="val mono" id="vE"></span>
+          <span>Toxin X</span><div class="bar"><div id="bX" style="background:var(--X)"></div></div><span class="val mono" id="vX"></span>
+          <span>Drive D</span><div class="bar"><div id="bD" style="background:var(--D)"></div></div><span class="val mono" id="vD"></span>
+        </div>
+        <div style="margin-top:10px"><canvas id="drive"></canvas></div>
+        <div class="legend">
+          <span><span class="sw" style="background:var(--D)"></span>drive D (left axis)</span>
+          <span><span class="sw" style="background:var(--E);opacity:.6"></span>energy E (0..E_max, faint)</span>
+          <span><span class="sw" style="background:var(--night)"></span>night</span>
+          <span><span class="sw" style="background:var(--eat)"></span>eat (bottom ticks)</span>
+          <span><span class="sw" style="background:var(--poison)"></span>poison (top ticks)</span>
+          <span class="note">click or drag the plot to seek</span>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Brain <small id="brainnote"></small></h2>
+        <div class="row2">
+          <div>
+            <div class="note" style="margin-bottom:6px" id="fhead">Action energies F(x, a) this tick. Lowest energy = most probable.</div>
+            <div id="ftable"></div>
+            <div class="note" id="faxis" style="margin-top:4px"></div>
+            <div class="controls" style="margin-top:4px">
+              <label class="note">bar axis
+                <select id="faxismode"><option value="tick" selected>this tick's range</option><option value="life">whole-life range</option></select></label>
+            </div>
+          </div>
+          <div>
+            <div class="note" style="margin-bottom:4px">Hidden units H over life</div>
+            <canvas id="hplot"></canvas>
+          </div>
+        </div>
+        <div style="margin-top:10px">
+          <div class="note" style="margin-bottom:4px" id="uhead">u matrix per night (hidden x input). Blue = negative, orange = positive. Click a night to jump to it.</div>
+          <div id="heatstrip"><canvas id="ustrip"></canvas></div>
+          <div style="display:flex; gap:12px; margin-top:8px; align-items:flex-start;">
+            <canvas id="ubig"></canvas>
+            <div class="note" id="uinfo" style="min-width:160px"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script>
+"use strict";
+// ---------------------------------------------------------------------------------------------
+// EBM run viewer. Read-only. Loads run.json written by `python -m creature.export`.
+// Coordinates: the sim uses (y, x) on a torus with y += sin(h), x += cos(h). We draw with y UP
+// (row 0 at the bottom) so a LEFT action (heading += turn) turns counter-clockwise on screen,
+// i.e. the creature's left is the viewer's left. The field image is flipped to match.
+// ---------------------------------------------------------------------------------------------
+const $ = (id) => document.getElementById(id);
+const DPR = Math.max(1, window.devicePixelRatio || 1);
+const CSS = getComputedStyle(document.documentElement);
+const C = (n) => CSS.getPropertyValue(n).trim();
+
+let RUN, T, N, W, H, CFG, IMGS = [], SNAP_T = [], NIGHTS = [], EVT_AT = new Map(), BRAIN = null;
+let cur = 0, playing = false, lastTs = null, acc = 0;
+let driveBg = null, stripBg = null, hBg = null;
+const lifeStats = {};
+
+function setupCanvas(cv, w, h) {
+  cv.style.width = w + "px"; cv.style.height = h + "px";
+  cv.width = Math.round(w * DPR); cv.height = Math.round(h * DPR);
+  const ctx = cv.getContext("2d"); ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  return ctx;
+}
+function offscreen(w, h) {
+  const cv = document.createElement("canvas");
+  cv.width = Math.round(w * DPR); cv.height = Math.round(h * DPR);
+  const ctx = cv.getContext("2d"); ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  return [cv, ctx];
+}
+const fmt = (v, d = 3) => (v === null || v === undefined || Number.isNaN(v)) ? "-" : Number(v).toFixed(d);
+function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+function bsearchLE(arr, v) { // index of last arr[i] <= v, or -1
+  let lo = 0, hi = arr.length - 1, ans = -1;
+  while (lo <= hi) { const m = (lo + hi) >> 1; if (arr[m] <= v) { ans = m; lo = m + 1; } else hi = m - 1; }
+  return ans;
+}
+
+// ---- loading --------------------------------------------------------------------------------
+async function boot() {
+  const params = new URLSearchParams(location.search);
+  const run = params.get("run");
+  if (!run) {
+    $("status").innerHTML = 'No run given. Open <code>/viewer/?run=runs/&lt;label&gt;/&lt;seed&gt;/run.json</code> ' +
+      '(path relative to the server root), or pick a run.json: <input type="file" id="pick" accept=".json">';
+    $("pick").addEventListener("change", (e) => {
+      const f = e.target.files[0]; if (!f) return;
+      const rd = new FileReader();
+      rd.onload = () => { try { start(JSON.parse(rd.result)); } catch (err) { fail(err); } };
+      rd.readAsText(f);
+    });
+    return;
+  }
+  // a bare relative path means "relative to the server root" (the page itself lives in /viewer/)
+  const url = /^(https?:)?\//.test(run) ? run : "/" + run;
+  $("status").textContent = "Loading " + url + " ...";
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error("HTTP " + r.status + " for " + url + ". Did you run `uv run python -m creature.export <run_dir>` and serve from the repo root?");
+    start(await r.json());
+  } catch (err) { fail(err); }
+}
+function fail(err) {
+  $("status").innerHTML = '<span class="err">Could not load run: ' + esc(err.message || err) + "</span>";
+  console.error(err);
+}
+
+async function start(run) {
+  if (!run || !run.ticks || !run.meta) throw new Error("not a creature.export run.json");
+  RUN = run; T = run.ticks; N = T.t.length; CFG = run.meta.config;
+  W = run.world.W; H = run.world.H;
+  BRAIN = run.brain && run.brain.length ? run.brain : null;
+  for (const e of run.events) {
+    if (!EVT_AT.has(e.t)) EVT_AT.set(e.t, []);
+    EVT_AT.get(e.t).push(e);
+  }
+  // night bands from tick phases (robust even if a night was cut short by death)
+  let s = null;
+  for (let i = 0; i < N; i++) {
+    if (T.sleep[i] && s === null) s = i;
+    if (!T.sleep[i] && s !== null) { NIGHTS.push([s, i - 1]); s = null; }
+  }
+  if (s !== null) NIGHTS.push([s, N - 1]);
+  // life ranges
+  lifeStats.Dmax = Math.max(1e-6, ...T.D);
+  lifeStats.Xmax = Math.max(0.05, ...T.X);
+  lifeStats.Emax = (CFG.body && CFG.body.E_max) || 1;
+  lifeStats.Hmax = Math.max(1, ...T.H.map((v) => v || 0));
+  if (T.F) {
+    let lo = Infinity, hi = -Infinity;
+    for (const col of T.F) for (const v of col) if (v !== null) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+    lifeStats.Flo = lo; lifeStats.Fhi = hi;
+  }
+  // field images
+  SNAP_T = run.fields.t || [];
+  IMGS = (run.fields.png || []).map((src) => { const im = new Image(); im.src = src; return im; });
+  await Promise.all(IMGS.map((im) => (im.decode ? im.decode().catch(() => null) : null)));
+
+  $("status").hidden = true; $("app").hidden = false;
+  renderHeader();
+  layout();
+  bindUI();
+  seek(0);
+}
+
+// ---- header ---------------------------------------------------------------------------------
+function renderHeader() {
+  const m = RUN.meta, c = m.config, s = m.summary || {};
+  $("title").innerHTML = [
+    "<b>" + esc(c.label) + "</b> / seed " + esc(c.seed),
+    "policy <b>" + esc(c.policy) + "</b>",
+    "commit <span class='mono'>" + esc(m.commit) + "</span>",
+    "source <span class='mono'>" + esc(m.source_hash) + "</span>",
+  ].join("<span class='sep'>|</span>");
+  const chip = (k, v, cls = "") => `<span class="chip ${cls}">${esc(k)} <b>${esc(v)}</b></span>`;
+  const chips = [
+    chip("alive", s.alive, s.alive ? "good" : "bad"), chip("days", s.days), chip("ticks alive", s.ticks_alive),
+    chip("food", s.food), chip("poison", s.poison), chip("mean drive", s.mean_drive),
+    chip("first food t", s.first_food_t === null ? "never" : s.first_food_t),
+    chip("poison bites after first", s.poison_bites_after_first), chip("H", s.H),
+    chip("sleep", c.sleep), chip("growth", c.growth), chip("day learning", c.day_learning),
+    chip("days x len", c.days + " x " + c.day_len + "+" + c.sleep_len), chip("sim seconds", m.seconds),
+  ];
+  $("chips").innerHTML = chips.join("");
+  const info = { export: { format: RUN.format, run_dir: RUN.run_dir, field_scale: RUN.fields.scale,
+    snapshots_kept: SNAP_T.length, snapshots_original: RUN.fields.n_original, snapshot_stride: RUN.fields.stride,
+    snap_every: RUN.fields.snap_every }, config: c, actions: m.actions, world_ledger: m.world_ledger, summary: s };
+  $("cfg").textContent = JSON.stringify(info, null, 1);
+  $("worldnote").textContent = `${H} x ${W} torus, y up` +
+    (RUN.fields.stride > 1 ? ` | field shown every ${RUN.fields.stride * RUN.fields.snap_every} ticks (downsampled)` :
+      ` | field snapshot every ${RUN.fields.snap_every} ticks`);
+  $("brainnote").textContent = T.F ? "energy-based policy: pi(a|x) = softmax(-F(x,a)/T), T = " + ((c.brain && c.brain.T) || 1)
+    : "policy '" + c.policy + "' logs no energies";
+}
+
+// ---- layout & static backgrounds -----------------------------------------------------------
+const WORLD_PX = 528, SCALE = WORLD_PX / 48;
+let wctx, sctx, dctx, hctx, usctx, ubctx, worldScale, DRIVE_W, DRIVE_H = 150, STRIP_W = WORLD_PX, STRIP_H = 22;
+function layout() {
+  worldScale = WORLD_PX / Math.max(W, H);
+  wctx = setupCanvas($("world"), W * worldScale, H * worldScale);
+  sctx = setupCanvas($("strip"), STRIP_W, STRIP_H);
+  DRIVE_W = Math.max(300, $("drive").parentElement.clientWidth);
+  dctx = setupCanvas($("drive"), DRIVE_W, DRIVE_H);
+  hctx = setupCanvas($("hplot"), 240, 90);
+  buildDriveBg(); buildStripBg(); buildHBg(); buildUStrip();
+}
+const xOf = (i, w, pad = 0) => pad + (N <= 1 ? 0 : (i / (N - 1)) * (w - 2 * pad));
+
+function buildDriveBg() {
+  const w = DRIVE_W, h = DRIVE_H, padL = 36, padR = 6, top = 10, bot = 16;
+  const [cv, ctx] = offscreen(w, h);
+  const X = (i) => padL + (N <= 1 ? 0 : (i / (N - 1)) * (w - padL - padR));
+  const Y = (v) => top + (1 - v / lifeStats.Dmax) * (h - top - bot);
+  ctx.fillStyle = "#11151d"; ctx.fillRect(padL, top, w - padL - padR, h - top - bot);
+  ctx.fillStyle = C("--night");
+  for (const [a, b] of NIGHTS) ctx.fillRect(X(a), top, Math.max(1, X(b) - X(a)), h - top - bot);
+  // axis
+  ctx.fillStyle = C("--dim"); ctx.font = "10px ui-monospace, monospace"; ctx.textAlign = "right";
+  ctx.fillText(lifeStats.Dmax.toFixed(3), padL - 4, top + 8); ctx.fillText("0", padL - 4, h - bot);
+  ctx.textAlign = "left"; ctx.fillText("t=0", padL, h - 3);
+  ctx.textAlign = "right"; ctx.fillText("t=" + T.t[N - 1], w - padR, h - 3);
+  // energy (faint, own 0..E_max scale)
+  ctx.strokeStyle = C("--E"); ctx.globalAlpha = 0.35; ctx.lineWidth = 1; ctx.beginPath();
+  for (let i = 0; i < N; i++) { const y = top + (1 - T.E[i] / lifeStats.Emax) * (h - top - bot); i ? ctx.lineTo(X(i), y) : ctx.moveTo(X(i), y); }
+  ctx.stroke(); ctx.globalAlpha = 1;
+  // drive
+  ctx.strokeStyle = C("--D"); ctx.lineWidth = 1.4; ctx.beginPath();
+  for (let i = 0; i < N; i++) { const y = Y(T.D[i]); i ? ctx.lineTo(X(i), y) : ctx.moveTo(X(i), y); }
+  ctx.stroke();
+  // events
+  const idxOfT = (t) => { const k = bsearchLE(T.t, t); return k < 0 ? 0 : k; };
+  for (const e of RUN.events) {
+    if (e.kind === "eat") { ctx.fillStyle = C("--eat"); ctx.fillRect(X(idxOfT(e.t)), h - bot - 6, 1.2, 6); }
+    else if (e.kind === "poison") { ctx.fillStyle = C("--poison"); ctx.fillRect(X(idxOfT(e.t)), top, 1.2, 6); }
+    else if (e.kind === "death") { ctx.fillStyle = "#ff5050"; ctx.fillRect(X(idxOfT(e.t)) - 1, top, 2, h - top - bot); }
+  }
+  driveBg = { cv, X, padL, padR, top, bot };
+}
+function buildStripBg() {
+  const [cv, ctx] = offscreen(STRIP_W, STRIP_H);
+  ctx.fillStyle = "#3a3218"; ctx.fillRect(0, 0, STRIP_W, STRIP_H);
+  ctx.fillStyle = C("--night");
+  for (const [a, b] of NIGHTS) ctx.fillRect(xOf(a, STRIP_W), 0, Math.max(1, xOf(b, STRIP_W) - xOf(a, STRIP_W)), STRIP_H);
+  const idxOfT = (t) => Math.max(0, bsearchLE(T.t, t));
+  for (const e of RUN.events) {
+    if (e.kind === "eat") { ctx.fillStyle = C("--eat"); ctx.fillRect(xOf(idxOfT(e.t), STRIP_W), STRIP_H - 7, 1, 7); }
+    if (e.kind === "poison") { ctx.fillStyle = C("--poison"); ctx.fillRect(xOf(idxOfT(e.t), STRIP_W), 0, 1, 7); }
+    if (e.kind === "grow") { ctx.fillStyle = "#ffffff"; ctx.fillRect(xOf(idxOfT(e.t), STRIP_W), 8, 1, 6); }
+  }
+  stripBg = cv;
+}
+function buildHBg() {
+  const w = 240, h = 90, pad = 4, top = 12, bot = 14;
+  const [cv, ctx] = offscreen(w, h);
+  ctx.fillStyle = "#11151d"; ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = C("--night");
+  for (const [a, b] of NIGHTS) ctx.fillRect(xOf(a, w, pad), top, Math.max(1, xOf(b, w, pad) - xOf(a, w, pad)), h - top - bot);
+  const Y = (v) => top + (1 - v / lifeStats.Hmax) * (h - top - bot);
+  ctx.strokeStyle = "#c9a2ff"; ctx.lineWidth = 1.5; ctx.beginPath();
+  for (let i = 0; i < N; i++) { const y = Y(T.H[i] || 0); i ? ctx.lineTo(xOf(i, w, pad), y) : ctx.moveTo(xOf(i, w, pad), y); }
+  ctx.stroke();
+  ctx.fillStyle = C("--dim"); ctx.font = "10px ui-monospace, monospace";
+  ctx.fillText("max " + lifeStats.Hmax, 4, 10);
+  if (!T.H.some((v) => v)) { ctx.fillStyle = C("--faint"); ctx.fillText("no hidden units (baseline policy)", 30, h / 2 + 4); }
+  hBg = { cv, w, h, pad };
+}
+
+// ---- u heatmaps -----------------------------------------------------------------------------
+let uAbsMax = 1, uStripRects = [];
+function divColor(v) {
+  const s = Math.max(-1, Math.min(1, v / uAbsMax));
+  const base = [26, 31, 43], neg = [70, 150, 255], pos = [255, 150, 60];
+  const tgt = s < 0 ? neg : pos, k = Math.sqrt(Math.abs(s));
+  return `rgb(${base.map((b, j) => Math.round(b + (tgt[j] - b) * k)).join(",")})`;
+}
+function buildUStrip() {
+  const cv = $("ustrip");
+  if (!BRAIN) {
+    usctx = setupCanvas(cv, 10, 10); cv.style.display = "none";
+    $("ubig").style.display = "none";
+    $("uhead").textContent = T.F ? "No brain.npz in this run (the creature never completed a night), so there is no per-night u matrix to show."
+      : "No brain (baseline policy): no u matrix.";
+    return;
+  }
+  uAbsMax = 1e-9;
+  for (const n of BRAIN) for (const row of n.u) for (const v of row) uAbsMax = Math.max(uAbsMax, Math.abs(v));
+  const cw = 3, gap = 6, dim = BRAIN[0].u[0].length, maxH = Math.max(...BRAIN.map((n) => n.H));
+  const ch = Math.max(1, Math.min(3, Math.floor(64 / maxH)));
+  const tileW = dim * cw, tileH = maxH * ch;
+  const w = BRAIN.length * (tileW + gap) + gap, h = tileH + 16;
+  usctx = setupCanvas(cv, w, h);
+  uStripRects = BRAIN.map((n, k) => ({ x: gap + k * (tileW + gap), y: 2, w: tileW, h: n.H * ch, k, cw, ch, tileH }));
+  ubctx = setupCanvas($("ubig"), 12 * 18 + 30, Math.min(32, maxH) * 12 + 30);
+  $("uhead").textContent += ` Colour scale symmetric, |u| max over all nights = ${uAbsMax.toFixed(3)}.`;
+}
+function drawUStrip(curNight) {
+  if (!BRAIN) return;
+  const cv = $("ustrip"), w = cv.width / DPR, h = cv.height / DPR;
+  usctx.clearRect(0, 0, w, h);
+  for (const r of uStripRects) {
+    const n = BRAIN[r.k];
+    for (let i = 0; i < n.H; i++) for (let j = 0; j < n.u[i].length; j++) {
+      usctx.fillStyle = divColor(n.u[i][j]); usctx.fillRect(r.x + j * r.cw, r.y + i * r.ch, r.cw, r.ch);
+    }
+    if (r.k === curNight) { usctx.strokeStyle = "#ffffff"; usctx.lineWidth = 1.5; usctx.strokeRect(r.x - 1.5, r.y - 1.5, r.w + 3, r.h + 3); }
+    usctx.fillStyle = r.k === curNight ? "#ffffff" : C("--faint"); usctx.font = "9px ui-monospace, monospace";
+    usctx.fillText(String(n.day === null ? r.k : n.day), r.x, r.tileH + 13);
+  }
+}
+let ubigNight = -1;
+function drawUBig(k) {
+  if (!BRAIN) return;
+  const cv = $("ubig"), w = cv.width / DPR, h = cv.height / DPR;
+  ubctx.clearRect(0, 0, w, h);
+  ubigNight = k;
+  if (k < 0) {
+    ubctx.fillStyle = C("--faint"); ubctx.font = "11px sans-serif";
+    ubctx.fillText("before the first night: initial weights are not logged", 4, 20);
+    $("uinfo").innerHTML = "";
+    return;
+  }
+  const n = BRAIN[k], names = RUN.input_names || [], cw = 18, ch = Math.max(4, Math.min(12, Math.floor((h - 30) / n.H)));
+  const ox = 28, oy = 26;
+  ubctx.font = "9px ui-monospace, monospace"; ubctx.fillStyle = C("--dim");
+  ubctx.save();
+  for (let j = 0; j < n.u[0].length; j++) {
+    ubctx.save(); ubctx.translate(ox + j * cw + cw / 2 + 3, oy - 3); ubctx.rotate(-Math.PI / 3);
+    ubctx.fillText(names[j] || ("x" + j), 0, 0); ubctx.restore();
+  }
+  ubctx.restore();
+  for (let i = 0; i < n.H; i++) {
+    if (ch >= 8 || i % 4 === 0) { ubctx.fillStyle = C("--dim"); ubctx.textAlign = "right"; ubctx.fillText("h" + i, ox - 3, oy + i * ch + ch - 2); ubctx.textAlign = "left"; }
+    for (let j = 0; j < n.u[i].length; j++) { ubctx.fillStyle = divColor(n.u[i][j]); ubctx.fillRect(ox + j * cw, oy + i * ch, cw - 1, ch - 1); }
+  }
+  $("uinfo").innerHTML = `<b>night ${k}</b> (end of day ${n.day}, t=${n.t})<br>H = ${n.H} hidden units<br>` +
+    `rows = hidden units, columns = inputs:<br>L/R = left/right antenna, A/B/C = notes, d = change, E/X = body, bias.<br>` +
+    `<span id="uhover" class="mono"></span>`;
+}
+
+// ---- per-frame drawing ----------------------------------------------------------------------
+function snapIndex(t) { const k = bsearchLE(SNAP_T, t); return k < 0 ? (SNAP_T.length ? 0 : -1) : k; }
+function nightIndex(t) { if (!BRAIN) return -1; let k = -1; for (let i = 0; i < BRAIN.length; i++) if (BRAIN[i].t !== null && BRAIN[i].t <= t) k = i; return k; }
+
+function drawWorld(i) {
+  const ctx = wctx, s = worldScale, Wp = W * s, Hp = H * s;
+  ctx.fillStyle = "#000"; ctx.fillRect(0, 0, Wp, Hp);
+  const k = snapIndex(T.t[i]);
+  if (k >= 0 && IMGS[k] && IMGS[k].complete) {
+    ctx.save(); ctx.imageSmoothingEnabled = $("smooth").checked;
+    ctx.translate(0, Hp); ctx.scale(1, -1); ctx.drawImage(IMGS[k], 0, 0, Wp, Hp); ctx.restore();
+  }
+  const P = (y, x) => [x * s, Hp - y * s];
+  // trail (fading), broken at torus wraps
+  if ($("trailon").checked) {
+    const L = 160, i0 = Math.max(0, i - L);
+    ctx.lineWidth = 2; ctx.lineCap = "round";
+    for (let j = i0 + 1; j <= i; j++) {
+      const dx = T.x[j] - T.x[j - 1], dy = T.y[j] - T.y[j - 1];
+      if (Math.abs(dx) > W / 2 || Math.abs(dy) > H / 2) continue;
+      const a = (j - i0) / (i - i0 + 1);
+      ctx.strokeStyle = `rgba(255,255,255,${(0.75 * a).toFixed(3)})`;
+      const [x1, y1] = P(T.y[j - 1], T.x[j - 1]), [x2, y2] = P(T.y[j], T.x[j]);
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    }
+  }
+  const asleep = !!T.sleep[i];
+  if (asleep) { ctx.fillStyle = "rgba(4,6,22,0.62)"; ctx.fillRect(0, 0, Wp, Hp); }
+  // creature, drawn at the 9 torus images so it stays whole across edges
+  const y = T.y[i], x = T.x[i], h = T.h[i];
+  const sense = RUN.sense || {}, ang = sense.antenna_angle ?? Math.PI / 4, alen = sense.antenna_len ?? 1.5;
+  const evs = EVT_AT.get(T.t[i]) || [];
+  for (const oy of [-H, 0, H]) for (const ox of [-W, 0, W]) {
+    const cy = y + oy, cx = x + ox;
+    if (cx < -3 || cx > W + 3 || cy < -3 || cy > H + 3) continue;
+    // antennae: tips exactly where senses.py reads the field
+    for (const [sg, col] of [[1, "#ff9b3d"], [-1, "#7cc4ff"]]) {
+      const a = h + sg * ang, [tx, ty] = P(cy + alen * Math.sin(a), cx + alen * Math.cos(a)), [bx, by] = P(cy, cx);
+      ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(tx, ty); ctx.stroke();
+      ctx.fillStyle = col; ctx.beginPath(); ctx.arc(tx, ty, 2.5, 0, 2 * Math.PI); ctx.fill();
+    }
+    const fx = Math.cos(h), fy = Math.sin(h), px = -fy, py = fx, L = 1.0;
+    const pts = [[cy + L * fy, cx + L * fx], [cy - 0.6 * fy + 0.55 * py, cx - 0.6 * fx + 0.55 * px], [cy - 0.6 * fy - 0.55 * py, cx - 0.6 * fx - 0.55 * px]].map(([yy, xx]) => P(yy, xx));
+    ctx.fillStyle = asleep ? "#8890a8" : "#ffffff"; ctx.strokeStyle = "#000"; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(...pts[0]); ctx.lineTo(...pts[1]); ctx.lineTo(...pts[2]); ctx.closePath(); ctx.fill(); ctx.stroke();
+    for (const e of evs) {
+      if (e.kind !== "eat" && e.kind !== "poison" && e.kind !== "death") continue;
+      const [bx, by] = P(cy, cx);
+      ctx.strokeStyle = e.kind === "eat" ? C("--eat") : e.kind === "poison" ? C("--poison") : "#ff4040";
+      ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(bx, by, s * 1.6, 0, 2 * Math.PI); ctx.stroke();
+    }
+  }
+  if (asleep) { ctx.fillStyle = "#a9b8ff"; ctx.font = "600 14px sans-serif"; ctx.fillText("asleep (field = last waking snapshot)", 10, 22); }
+  const isDeath = evs.some((e) => e.kind === "death");
+  if (isDeath) { ctx.fillStyle = "#ff6060"; ctx.font = "600 16px sans-serif"; ctx.fillText("death", 10, Hp - 12); }
+}
+
+function drawStrip(i) {
+  sctx.clearRect(0, 0, STRIP_W, STRIP_H);
+  sctx.drawImage(stripBg, 0, 0, STRIP_W, STRIP_H);
+  const x = xOf(i, STRIP_W);
+  sctx.fillStyle = "#fff"; sctx.fillRect(x - 1, 0, 2, STRIP_H);
+}
+
+function drawDrive(i) {
+  const w = DRIVE_W, h = DRIVE_H, b = driveBg;
+  dctx.clearRect(0, 0, w, h);
+  dctx.drawImage(b.cv, 0, 0, w, h);
+  const x = b.X(i);
+  // future is dimmed so the line "scrolls in" as the life plays
+  dctx.fillStyle = "rgba(14,17,23,0.62)"; dctx.fillRect(x, b.top, w - b.padR - x, h - b.top - b.bot);
+  dctx.fillStyle = "#fff"; dctx.fillRect(x - 0.75, b.top, 1.5, h - b.top - b.bot);
+  const yD = b.top + (1 - T.D[i] / lifeStats.Dmax) * (h - b.top - b.bot);
+  dctx.fillStyle = C("--D"); dctx.beginPath(); dctx.arc(x, yD, 3, 0, 2 * Math.PI); dctx.fill();
+}
+
+function drawH(i) {
+  const { cv, w, h, pad } = hBg;
+  hctx.clearRect(0, 0, w, h); hctx.drawImage(cv, 0, 0, w, h);
+  const x = xOf(i, w, pad);
+  hctx.fillStyle = "#fff"; hctx.fillRect(x - 0.75, 12, 1.5, h - 26);
+  hctx.fillStyle = C("--dim"); hctx.font = "10px ui-monospace, monospace"; hctx.textAlign = "right";
+  hctx.fillText("H now " + (T.H[i] || 0), w - 4, 10); hctx.textAlign = "left";
+}
+
+function drawBody(i) {
+  const set = (id, frac, txt) => { $("b" + id).style.width = (100 * Math.max(0, Math.min(1, frac))).toFixed(1) + "%"; $("v" + id).textContent = txt; };
+  set("E", T.E[i] / lifeStats.Emax, `${fmt(T.E[i], 4)} / ${lifeStats.Emax}`);
+  set("X", T.X[i] / lifeStats.Xmax, `${fmt(T.X[i], 4)} / ${fmt(lifeStats.Xmax, 2)}`);
+  set("D", T.D[i] / lifeStats.Dmax, `${fmt(T.D[i], 4)} / ${fmt(lifeStats.Dmax, 3)}`);
+}
+
+function drawBrain(i) {
+  const names = RUN.meta.actions || ["LEFT", "RIGHT", "FORWARD"];
+  const a = T.a[i], asleep = !!T.sleep[i];
+  const rows = [];
+  if (!T.F) {
+    $("fhead").textContent = `This policy (${CFG.policy}) logs no action energies. Only the chosen action is shown.`;
+    $("faxismode").parentElement.style.display = "none";
+    names.forEach((n, k) => rows.push(`<span class="name">${n}</span><div class="bar"><div style="width:0"></div></div><span></span><span></span>` +
+      `${!asleep && a === k ? '<span class="pill">chosen</span>' : "<span></span>"}`));
+    $("faxis").textContent = asleep ? "asleep: no action this tick" : "";
+    $("ftable").innerHTML = rows.join("");
+    return;
+  }
+  const F = [T.F[0][i], T.F[1][i], T.F[2][i]];
+  if (F[0] === null) {
+    names.forEach((n) => rows.push(`<span class="name">${n}</span><div class="bar"></div><span class="val">-</span><span></span><span></span>`));
+    $("ftable").innerHTML = rows.join("");
+    $("faxis").textContent = asleep ? "asleep: the brain does not act at night (no F logged)" : "no F logged this tick";
+    return;
+  }
+  const Tm = (CFG.brain && CFG.brain.T) || 1;
+  const z = F.map((f) => -f / Tm), zm = Math.max(...z), ex = z.map((v) => Math.exp(v - zm)), Z = ex.reduce((p, q) => p + q, 0);
+  const pi = ex.map((v) => v / Z);
+  const lowK = F.indexOf(Math.min(...F));
+  let lo, hi;
+  if ($("faxismode").value === "life") { lo = lifeStats.Flo; hi = lifeStats.Fhi; }
+  else { const mn = Math.min(...F), mx = Math.max(...F), span = Math.max(mx - mn, 1e-3); lo = mn - span; hi = mx + 0.25 * span; }
+  names.forEach((n, k) => {
+    const frac = (F[k] - lo) / Math.max(hi - lo, 1e-9);
+    const col = k === lowK ? C("--low") : "#56607a";
+    rows.push(`<span class="name ${k === lowK ? "lowtag" : ""}">${n}</span>` +
+      `<div class="bar"><div style="width:${(100 * Math.max(0.01, Math.min(1, frac))).toFixed(1)}%;background:${col}"></div></div>` +
+      `<span class="val mono">${fmt(F[k], 4)}</span><span class="val mono">pi ${fmt(pi[k], 2)}</span>` +
+      `${a === k ? '<span class="pill">chosen</span>' : "<span></span>"}`);
+  });
+  $("ftable").innerHTML = rows.join("");
+  $("faxis").innerHTML = `bars start at F = ${fmt(lo, 3)} and end at ${fmt(hi, 3)} (shorter = lower energy). ` +
+    `<span class="lowtag">green</span> = lowest F. The action is <i>sampled</i> from pi, so "chosen" need not be the lowest.`;
+}
+
+function drawReadout(i) {
+  const asleep = !!T.sleep[i], day = T.day[i];
+  const b = $("daybadge"); b.className = asleep ? "night" : "day";
+  b.textContent = asleep ? `NIGHT ${day} (asleep)` : `DAY ${day} (awake)`;
+  const names = RUN.meta.actions || ["LEFT", "RIGHT", "FORWARD"];
+  const evs = (EVT_AT.get(T.t[i]) || []).map((e) => e.kind).join(",");
+  $("tread").textContent = `t ${T.t[i]} / ${T.t[N - 1]}  action ${T.a[i] === null ? "-" : names[T.a[i]]}  r ${fmt(T.r[i], 5)}` + (evs ? `  [${evs}]` : "");
+}
+
+function render() {
+  const i = cur;
+  drawWorld(i); drawStrip(i); drawDrive(i); drawH(i); drawBody(i); drawBrain(i); drawReadout(i);
+  const nk = nightIndex(T.t[i]);
+  drawUStrip(nk);
+  if (nk !== ubigNight) drawUBig(nk);
+  $("scrub").value = i;
+}
+
+function seek(i) { cur = Math.max(0, Math.min(N - 1, Math.round(i))); render(); }
+
+// ---- UI ------------------------------------------------------------------------------------
+function setPlaying(p) {
+  playing = p; $("play").textContent = p ? "Pause" : "Play";
+  if (p) { if (cur >= N - 1) seek(0); lastTs = null; acc = 0; requestAnimationFrame(tick); }
+}
+function tick(ts) {
+  if (!playing) return;
+  if (lastTs !== null) {
+    acc += (ts - lastTs) / 1000 * Number($("speed").value);
+    const steps = Math.floor(acc);
+    if (steps > 0) { acc -= steps; seek(cur + steps); }
+    if (cur >= N - 1) { setPlaying(false); return; }
+  }
+  lastTs = ts;
+  requestAnimationFrame(tick);
+}
+function seekFromCanvasX(cv, clientX, padL, padR) {
+  const r = cv.getBoundingClientRect(), w = r.width;
+  const f = (clientX - r.left - padL) / Math.max(1, w - padL - padR);
+  seek(f * (N - 1));
+}
+function bindUI() {
+  const sc = $("scrub"); sc.max = N - 1;
+  sc.addEventListener("input", () => seek(Number(sc.value)));
+  $("play").onclick = () => setPlaying(!playing);
+  $("back").onclick = () => seek(cur - 1); $("fwd").onclick = () => seek(cur + 1);
+  $("first").onclick = () => seek(0); $("last").onclick = () => seek(N - 1);
+  for (const id of ["smooth", "trailon", "faxismode"]) $(id).addEventListener("change", render);
+  const drag = (cv, padL, padR) => {
+    let down = false;
+    cv.addEventListener("pointerdown", (e) => { down = true; cv.setPointerCapture(e.pointerId); seekFromCanvasX(cv, e.clientX, padL, padR); });
+    cv.addEventListener("pointermove", (e) => { if (down) seekFromCanvasX(cv, e.clientX, padL, padR); });
+    cv.addEventListener("pointerup", () => { down = false; });
+    cv.style.cursor = "pointer";
+  };
+  drag($("drive"), driveBg.padL, driveBg.padR); drag($("strip"), 0, 0); drag($("hplot"), hBg.pad, hBg.pad);
+  $("ustrip").addEventListener("click", (e) => {
+    const r = $("ustrip").getBoundingClientRect(), x = e.clientX - r.left;
+    const hit = uStripRects.find((q) => x >= q.x - 3 && x <= q.x + q.w + 3);
+    if (hit && BRAIN[hit.k].t !== null) seek(Math.max(0, bsearchLE(T.t, BRAIN[hit.k].t)));
+  });
+  $("ubig").addEventListener("mousemove", (e) => {
+    if (ubigNight < 0) return;
+    const n = BRAIN[ubigNight], r = $("ubig").getBoundingClientRect(), h = r.height;
+    const ch = Math.max(4, Math.min(12, Math.floor((h - 30) / n.H)));
+    const j = Math.floor((e.clientX - r.left - 28) / 18), ii = Math.floor((e.clientY - r.top - 26) / ch);
+    const el = $("uhover"); if (!el) return;
+    el.textContent = (ii >= 0 && ii < n.H && j >= 0 && j < n.u[0].length) ? `u[h${ii}, ${RUN.input_names[j]}] = ${n.u[ii][j].toFixed(4)}` : "";
+  });
+  window.addEventListener("keydown", (e) => {
+    if (e.target && e.target.tagName === "SELECT") return;
+    const step = e.shiftKey ? 10 : 1;
+    if (e.code === "Space") { e.preventDefault(); setPlaying(!playing); }
+    else if (e.key === "ArrowRight") { e.preventDefault(); setPlaying(false); seek(cur + step); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); setPlaying(false); seek(cur - step); }
+    else if (e.key === "Home") { e.preventDefault(); seek(0); }
+    else if (e.key === "End") { e.preventDefault(); seek(N - 1); }
+  });
+  let rt = null;
+  window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => {
+    const w = Math.max(300, $("drive").parentElement.clientWidth);
+    if (Math.abs(w - DRIVE_W) > 4) { DRIVE_W = w; dctx = setupCanvas($("drive"), DRIVE_W, DRIVE_H); buildDriveBg(); render(); }
+  }, 150); });
+}
+
+boot();
+</script>
+</body>
+</html>
