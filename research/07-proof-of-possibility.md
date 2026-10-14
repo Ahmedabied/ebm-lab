@@ -53,9 +53,15 @@ representation, and still stands; but the xor world as calibrated does not *puni
 enough to make the conjunction necessary for survival. This is a world-design decision for Ahmed
 (raise toxicity, or make poison deplete energy directly) and must not be changed inside EXP-02.
 
-**By search (M1b).** An evolution strategy over the full θ with 4 hidden units (search seeds 300–303,
-held-out 320–339): `m1_search_xor.json` — *(pending; the ES hit the ceiling on the search seeds in
-generation 1, consistent with 1.3: the xor world is easy for a linear chaser)*.
+**By search (M1b).** An evolution strategy over the full θ with 4 hidden units (103 parameters;
+population 24, elite 6, 40 generations; search seeds 300–303, held-out 320–339), xor world:
+`m1_search_xor.json`. The best member hit the 5250 ceiling in generation 1, the population mean reached
+5250 by generation 39, and the final θ lives **5250 on 20/20 held-out seeds** (food 13.7–21.5 on the
+first five). Consistent with 1.3: the xor world is easy for an A-chaser, so search finds a survivor at
+once and the result says nothing about the conjunction. Provenance note: the process imported the
+creature code at launch (commit `2e30295`) and ran for 52 min across later merges; the json's `commit`
+field (`3866e04`) was stamped at write time. No file it depends on for a frozen, non-learning life
+(`physics`, `world`, `body`, `senses`, `Brain.F` with centre off) changed in between.
 
 ## 2. Signal: the lesson is informative; the step is the problem (M2, M3)
 

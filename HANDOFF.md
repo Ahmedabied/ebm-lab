@@ -35,6 +35,4 @@ and kept as the pre-registered target with a textbook variant added (A17).
 ## Housekeeping
 - Raw run logs live under `/tmp/ebm-runs/` (not committed; regenerate with the commands in each
   finding). Referee scratch scripts are under the session scratchpad and are not part of the record.
-- Pending at close: the ES search `research/07-proof-of-possibility/m1_search_xor.*` (held-out
-  evaluation of a searched θ in xor); if its json exists, its held-out number belongs in
-  `research/07` §1 "By search".
+- The ES search (`research/07` M1b) finished after the close: held-out 5250 on 20/20 in xor; recorded.
