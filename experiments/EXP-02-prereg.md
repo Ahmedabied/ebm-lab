@@ -91,3 +91,39 @@ Tier 2: **two hostile referees per interesting conclusion**, briefed to break it
 "done", on the main result, and on the orchestrator's own proof-of-possibility notes
 (`research/07`). A conclusion stands only after both referees have had their shot and every
 objection is either fixed or recorded as a limitation.
+
+## Addendum — recorded BEFORE the main run (2026-10-14, after the build and referee tiers)
+Everything below was decided or discovered before `02_main.py` ran on seeds 200–219. The arms,
+seeds, metrics and predictions above are unchanged.
+
+1. **Contract change A14** (`DESIGN-AMENDMENTS.md`): the "ac" online actor lesson is the raw TD
+   error δ (drive units), not standardised; the first contract made the critic arm's online step
+   ~100× the baseline's (builder pilot, seeds 20–27: day-0 entropy 0.00–0.02 → fixed 1.09–1.10).
+2. **Behaviour-ratio fix** (hostile referee, bandit counterexample): the ε-greedy correction is the
+   UNCLIPPED ratio π_T/β (bounded by A/ε = 30), cached as log π_T beside log β; only the drift ratio
+   π_now/π_T,old is clipped. Clipping the behaviour ratio gave an estimator whose expected update
+   could have the wrong sign. Softmax acting is unchanged bit for bit (68 tests).
+3. **Step sizes from pilot seeds 20–27 (linear, 15 days):** alpha_q = 0.1 (grid {0.003…0.3},
+   interior, 953 ticks); alpha_v: 0.3 was the top edge of {0.01…0.3} (2075 ticks, CI [1085, 3169]);
+   the grid is being extended upward ({1.0, 3.0}, then {10} at most) and the chosen value is written
+   in `SimConfig` with the full pilot table in `experiments/results/02a_pilot_alpha/`. The pilot
+   also showed every q-mode value BELOW ebm-dn (1102) on those seeds, so P1 is at risk before the
+   run; two referees are checking whether that is a bug or a fact. No prediction is changed.
+4. **Ceiling:** `ticks_alive` is censored at 15 × 350 = 5250. Tabular Q already hits it in 10 of
+   20 EXP-01 lives. G is therefore a ratio of censored means; the report counts censored lives per
+   arm. P1's power at n = 20 when the true G = 0.75 is ~14–24% (referee simulation, lognormal
+   baseline + bimodal target); **a P1 failure is weak evidence** and will be read as such.
+5. **Pairing:** one RNG feeds world build, heading, brain init, sensor noise and action draws, so
+   arms sharing a seed share the starting world and heading but diverge in regrowth and noise from
+   tick 0–25 (referee measurement). The paired bootstrap pairs starting conditions, not full
+   common random numbers. Separate streams would break the exact EXP-01 replication (P3), so they
+   are deferred to EXP-03 and this is a stated limitation.
+6. **Multiple comparisons:** none applied. P1–P5 are the confirmatory tests, each on its own 95%
+   CI; all other contrasts are exploratory. The report prints this.
+7. **Proof-of-possibility findings relevant to reading the result** (`research/07`): the EBM class
+   contains the linear forager (hand-set weights live 5250 on 20/20 held-out seeds); the xor world as
+   calibrated is survivable by a pure A-chaser (poison not lethal enough), so P4 tests representation,
+   not survival pressure; the key-weight gradient has block-means SNR ≈ 1.9/day with the right sign
+   on 96% of days; one night at the defaults collapses the policy (entropy < 0.15).
+8. **Percentile-bootstrap coverage** for G at n = 20 measured at 0.93–0.95 (referee simulation);
+   accepted.
