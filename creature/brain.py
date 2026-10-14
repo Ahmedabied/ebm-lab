@@ -129,12 +129,57 @@ class Brain:
         g["u"] = g["c"][:, :, None] * X[:, None, :]          # (N, H, dim)
         return g
 
+    def grad_negF(self, X: np.ndarray, a: np.ndarray) -> dict:
+        """Per-sample gradient of Q(x,a) = -F(x,a) w.r.t. theta (learner="q", EXP-02).
+        Same dict shapes as grad_logpi, with coef = onehot(a) and no 1/T (no partition term:
+        Q-learning regresses the energy of the taken action itself)."""
+        N = X.shape[0]
+        S = _sigmoid(self.pre(X))                           # (N, H, A)
+        coef = np.zeros((N, A)); coef[np.arange(N), a] = 1.0
+        g = {}
+        g["b"] = coef
+        g["w"] = coef[:, :, None] * X[:, None, :]
+        SC = S * coef[:, None, :]
+        g["v"] = SC
+        g["c"] = SC.sum(axis=2)
+        g["u"] = g["c"][:, :, None] * X[:, None, :]
+        return g
+
+    def Q(self, X: np.ndarray) -> np.ndarray:
+        """Action values in "q" mode: Q(x, a) = -F(x, a), shape (N, A)."""
+        return -self.F(X)
+
+    def learn_q(self, X: np.ndarray, a: np.ndarray, y: np.ndarray, alpha: float) -> float:
+        """Semi-gradient Q-learning step on a batch: theta += alpha * mean_i (y_i - Q_i) dQ_i/dtheta.
+        y is held fixed (computed by the caller before the step). Returns mean |y - Q| before the
+        step (the TD-error instrument).
+        KNOWN LIMITATION (EXP-02, not changed by design): Q = -F includes sum_h softplus(c_h +
+        u_h.x + v_{h,a}), so at birth Q is ~H0*log 2 (~2.8 for H0=4) for every action, far from
+        Q* ~ r/(1-gamma) ~ -0.1; and a unit grown with v=0 adds softplus(c+u.x) ~ log 2 ~ 0.69 to
+        every action's Q. Greedy action is unchanged, but the TD error shifts by ~(gamma-1)*0.69 ~
+        -0.07 (large next to r ~ 1e-2). Downscaling (w,u,v *= 1-delta) also moves Q values."""
+        X = np.atleast_2d(X); a = np.asarray(a); y = np.asarray(y, dtype=np.float64)
+        N = X.shape[0]
+        td = y - self.Q(X)[np.arange(N), a]
+        g = self.grad_negF(X, a)
+        for k in self.theta:
+            self.theta[k] += alpha * np.tensordot(td, g[k], axes=(0, 0)) / N
+        return float(np.abs(td).mean())
+
     def learn(self, X: np.ndarray, a: np.ndarray, R: np.ndarray, lr: float | None = None,
-              logp_old: np.ndarray | None = None, clip: float = 0.2) -> float:
+              logp_old: np.ndarray | None = None, clip: float = 0.2,
+              beh_weight: np.ndarray | None = None) -> float:
         """One contrastive update on a batch of (sensation, action, lesson).
         If logp_old is given (sleep replay), each sample is weighted by the clipped importance
-        ratio π_now(a|x)/π_old(a|x) ∈ [1-clip, 1+clip] (PPO-style; R1 research/03 §Q2).
-        Returns the fraction of samples whose ratio was clipped (an instrument)."""
+        ratio π_now(a|x)/π_old(a|x) ∈ [1-clip, 1+clip] (PPO-style; R1 research/03 §Q2): the
+        DRIFT correction, for the policy having moved since the day. logp_old must be log π_T,old,
+        the learning policy at acting time, NOT the behaviour policy.
+        beh_weight, if given, is the UNCLIPPED ratio π_T,old(a|x)/β(a|x) for a behaviour policy β
+        that differs from π_T (ε-greedy acting). It is bounded by A/ε because β ≥ ε/A, and it is
+        exactly 1.0 under softmax acting. Clipping it instead made the estimator baseline-dependent
+        with a possibly wrong sign (hostile referee, session 03, bandit counterexample). The
+        multi-step credit (R, the trace) is still β's continuation: a known truncation.
+        Returns the fraction of samples whose drift ratio was clipped (an instrument)."""
         lr = self.cfg.lr if lr is None else lr
         g = self.grad_logpi(X, a)
         N = X.shape[0]
@@ -143,6 +188,8 @@ class Brain:
             rho = np.exp(self.logp(X, a) - logp_old)
             clipped = float(((rho < 1 - clip) | (rho > 1 + clip)).mean())
             R = R * np.clip(rho, 1 - clip, 1 + clip)
+        if beh_weight is not None:
+            R = R * beh_weight
         for k in self.theta:
             self.theta[k] += lr * np.tensordot(R, g[k], axes=(0, 0)) / N
         return clipped

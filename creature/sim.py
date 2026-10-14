@@ -36,6 +36,16 @@ class SimConfig:
     downscale: float = 0.01
     cache_days: int = 3
     clip: float = 1.0              # importance-ratio clip half-width for replay; pilot 01d: 1.0 > 0.2
+    # EXP-02 learners (interface contract in experiments/EXP-02-prereg.md)
+    learner: str = "pg"            # pg (EXP-01 day-return REINFORCE) | ac (linear critic, TD error
+                                   # lesson) | q (Q = -F, Q-learning, epsilon-greedy acting)
+    gamma: float = 0.9             # TD discount for "ac" and "q" (tabular Q's gamma)
+    alpha_v: float = 0.3           # critic step size ("ac"); pilot 02a after A14 (seeds 20-27, max
+                                   # mean ticks_alive over {0.01,0.03,0.1,0.3}: top EDGE of the grid)
+    alpha_q: float = 0.1           # Q-mode step size ("q"); pilot 02a (seeds 20-27, max mean
+                                   # ticks_alive over {0.003,0.01,0.03,0.1,0.3}; interior)
+    scale_decay: float = 0.99      # "ac": EMA decay of delta^2 for the actor's running scale
+                                   # (~100-tick memory, i.e. a third of a day)
     # growth
     growth: str = "surprise"       # surprise | timer | none
     growth_thresh: float = 0.005   # std of the day's raw lessons above this -> eventful day -> grow
@@ -69,13 +79,66 @@ def git_commit() -> str:
         return "unknown"
 
 
+class Critic:
+    """Linear state-value critic for learner="ac": V(x) = v.x (x carries a bias dim).
+    v is NOT part of brain.theta. It is sized lazily from the first x it sees, so it follows
+    whatever sensation dim the senses produce (12, or 15 with sign features).
+    It also keeps the running scale of the TD error used to standardise the actor's lesson:
+    m <- beta*m + (1-beta)*mean(delta^2), bias-corrected like Adam (m / (1 - beta^n)), so the
+    first lessons are not inflated by a zero-initialised EMA."""
+    def __init__(self, gamma: float, beta: float = 0.99, floor: float = 1e-3):
+        self.gamma, self.beta, self.floor = gamma, beta, floor
+        self.v = None; self.m = 0.0; self.n = 0
+    def _ensure(self, d: int):
+        if self.v is None:
+            self.v = np.zeros(d)
+        elif self.v.shape[0] != d:
+            raise ValueError(f"critic sized for dim {self.v.shape[0]}, got {d}")
+    def V(self, X) -> np.ndarray:
+        X = np.atleast_2d(np.asarray(X, dtype=np.float64)); self._ensure(X.shape[1])
+        return X @ self.v
+    def delta(self, X, r, Xn, done) -> np.ndarray:
+        """delta = r + gamma*(1-done)*V(x') - V(x); a terminal transition never reads V(x')."""
+        r = np.asarray(r, dtype=np.float64); done = np.asarray(done, dtype=np.float64)
+        boot = np.where(done > 0, 0.0, self.V(Xn))
+        return r + self.gamma * boot - self.V(X)
+    def update(self, X, r, Xn, done, alpha: float) -> np.ndarray:
+        """TD(0): v += alpha * mean_i delta_i x_i (delta from the pre-step v). Returns delta and
+        folds it into the running scale."""
+        X = np.atleast_2d(np.asarray(X, dtype=np.float64))
+        d = self.delta(X, r, Xn, done)
+        self.v += alpha * (d @ X) / X.shape[0]
+        self.m = self.beta * self.m + (1.0 - self.beta) * float(np.mean(d * d)); self.n += 1
+        return d
+    def scale(self) -> float:
+        if self.n == 0: return 1.0
+        return max(float(np.sqrt(self.m / (1.0 - self.beta ** self.n))), self.floor)
+    def state(self):
+        return (None if self.v is None else self.v.copy(), self.m, self.n)
+    def restore(self, st):
+        v, self.m, self.n = st; self.v = None if v is None else v.copy()
+
+
+def q_targets(brain, r, Xn, done, gamma: float) -> np.ndarray:
+    """y = r + gamma*(1-done)*max_a' Q(x', a'), Q = -F. A terminal transition's target is r."""
+    r = np.asarray(r, dtype=np.float64); done = np.asarray(done, dtype=np.float64)
+    boot = np.where(done > 0, 0.0, brain.Q(np.atleast_2d(Xn)).max(axis=1))
+    return r + gamma * boot
+
+
 class Cache:
-    """The day's episodes: what was sensed, what was done, what the body said."""
+    """The day's episodes: what was sensed, what was done, what the body said.
+    Each closed day also holds its transitions (x, a, r, logp, x_next, done): x_next is the next
+    waking tick's sensation, and the last tick of a day has done=True (no bootstrap across the
+    night; its x_next is a placeholder copy of x and is never read)."""
     def __init__(self):
         self.days: list[tuple[np.ndarray, np.ndarray, np.ndarray]] = []   # (X, a, R) per day
-        self.X, self.a, self.r, self.lp = [], [], [], []
-    def push(self, x, a, r, logp):
+        self.X, self.a, self.r, self.lp, self.lpi = [], [], [], [], []
+    def push(self, x, a, r, logp, logp_pi=None):
+        """logp = log β(a|x) of the behaviour policy; logp_pi = log π_T(a|x) of the learning policy
+        at the same moment (equal under softmax acting)."""
         self.X.append(x); self.a.append(a); self.r.append(r); self.lp.append(logp)
+        self.lpi.append(logp if logp_pi is None else logp_pi)
     def close_day(self, lam: float, keep_days: int):
         """Turn raw lessons r_t into credited lessons R_t = Σ λ^k r_{t+k}, baseline-subtracted.
         The tail is bootstrapped with the day's mean lesson continuing forever (mean_r/(1-λ)), so
@@ -92,15 +155,24 @@ class Cache:
             R[:] = 0.0
         else:                          # advantage normalisation: the body's lessons are O(0.01),
             R /= max(sd, 1e-3)         # the policy needs O(1) energy gaps; scale-free updates
-        self.days.append((np.array(self.X), np.array(self.a), R, np.array(self.lp, dtype=np.float64)))
+        X = np.array(self.X)
+        Xn = np.concatenate([X[1:], X[-1:]])
+        done = np.zeros(len(r)); done[-1] = 1.0
+        self.days.append((X, np.array(self.a), R, np.array(self.lp, dtype=np.float64), r, Xn, done,
+                          np.array(self.lpi, dtype=np.float64)))
         self.days = self.days[-keep_days:]
-        self.X, self.a, self.r, self.lp = [], [], [], []
+        self.X, self.a, self.r, self.lp, self.lpi = [], [], [], [], []
         # "surprise" for the growth trigger: how spiky the day's raw lessons were (std of r, in
         # drive units), i.e. how much happened that the body cared about
         return float(r.std())
     def batch_source(self, today_only: bool):
+        """(X, a, R, logp_behaviour, logp_pi) over the cached days."""
         days = self.days[-1:] if today_only else self.days
-        return tuple(np.concatenate([d[i] for d in days]) for i in range(4))
+        return tuple(np.concatenate([d[i] for d in days]) for i in (0, 1, 2, 3, 7))
+    def transitions(self, today_only: bool):
+        """(X, a, r, logp_behaviour, X_next, done, logp_pi) over the cached days, for the TD learners."""
+        days = self.days[-1:] if today_only else self.days
+        return tuple(np.concatenate([d[i] for d in days]) for i in (0, 1, 4, 3, 5, 6, 7))
 
 
 class Life:
@@ -112,10 +184,18 @@ class Life:
         self.senses = Senses(cfg.sense)
         self.y = cfg.world.H / 2; self.x = cfg.world.W / 2
         self.heading = float(self.rng.uniform(0, 2 * np.pi))
-        # the brain's input width follows the sense organ (12, or 15 with sign features);
-        # cfg.brain is not mutated
-        self.brain = (Brain(replace(cfg.brain, dim=self.senses.dim), self.rng)
-                      if cfg.policy == "ebm" else None)
+        if cfg.learner not in ("pg", "ac", "q"):
+            raise ValueError(f"unknown learner {cfg.learner!r}")
+        # The brain's input width follows the sense organ (12, or 15 with sign features), and Q
+        # mode acts ε-greedy on Q = −F (contract). cfg.brain is never mutated; the effective brain
+        # config is written to meta.json (law: provenance).
+        bcfg = replace(cfg.brain, dim=self.senses.dim)
+        if cfg.policy == "ebm" and cfg.learner == "q":
+            bcfg = replace(bcfg, act_mode="egreedy")
+        self.brain = Brain(bcfg, self.rng) if cfg.policy == "ebm" else None
+        self.critic = Critic(cfg.gamma, cfg.scale_decay) if (self.brain and cfg.learner == "ac") else None
+        self._pending = None               # "ac"/"q" online: (x, a, r, logp, logp_pi) awaiting x_next
+        self._td_day = []                  # online |TD error| this day (instrument)
         self.policy = None if self.brain else baselines.make(cfg.policy, self.rng)
         self.cache = Cache()
         self.trace = None
@@ -150,16 +230,25 @@ class Life:
     def wake_tick(self):
         sens = self.senses.sense(self.world, self.y, self.x, self.heading, self.body.state(), self.rng)
         x = sens["x"]
+        if self._pending is not None:      # the previous tick's transition now has its x_next
+            self.online_learn(*self._pending, x_next=x, done=False); self._pending = None
         if self.brain:
             a, Fx, logp = self.brain.act(x, self.rng)
+            # log π_T(a|x) at acting time (no RNG): under softmax acting it equals logp bit for bit;
+            # under ε-greedy it differs and the pair gives the behaviour ratio π_T/β for learning.
+            logp_pi = float(self.brain.logp(x[None, :], np.array([a]))[0])
         else:
-            a, Fx = self.policy.act(sens, self.world, self.y, self.x, self.heading, self.rng); logp = 0.0
+            a, Fx = self.policy.act(sens, self.world, self.y, self.x, self.heading, self.rng)
+            logp = logp_pi = 0.0
         self.move(a)
         food, poison = self.world.eat_at(self.y, self.x)
         r = self.body.tick(True, self.n_units(), food, poison)
-        self.cache.push(x, a, r, logp)
+        self.cache.push(x, a, r, logp, logp_pi)
         if self.brain and self.cfg.day_learning:
-            self.online_learn(x, a, r, logp)
+            if self.cfg.learner == "pg":
+                self.online_learn(x, a, r, logp, logp_pi)
+            else:
+                self._pending = (x, a, r, logp, logp_pi)
         if self.policy is not None:
             sens2 = {"left": sens["left"], "right": sens["right"], "body": self.body.state()}
             self.policy.learn_tick(sens2, r)
@@ -185,34 +274,76 @@ class Life:
             self._snaps.append(self.world.fields.astype(np.float16)); self._snap_t.append(self.t)
         self.t += 1
 
-    def online_learn(self, x, a, r, logp_behaviour):
-        """REINFORCE with an eligibility trace: same credit as the night rule, applied each tick.
-        Each tick's gradient enters the trace weighted by the clipped importance ratio
-        ρ = clip(π_T(a|x)/β(a|x), 1±clip), β being the behaviour policy that chose a (its log-prob
-        comes from Brain.act). Softmax acting: β = π_T with the same theta, so ρ == 1.0 exactly and
-        this is the EXP-01 rule bit-for-bit. Egreedy acting: an (approximately, clipped) corrected
-        policy gradient for π_T."""
-        A1 = np.array([a])
-        g = self.brain.grad_logpi(x[None, :], A1)
-        rho = float(np.exp(self.brain.logp(x[None, :], A1)[0] - logp_behaviour))
-        rho = min(max(rho, 1.0 - self.cfg.clip), 1.0 + self.cfg.clip)
+    def online_learn(self, x, a, r, logp, logp_pi=None, x_next=None, done=False):
+        """One online update. "pg": REINFORCE with an eligibility trace, applied at the tick itself
+        (x_next/done unused). "ac"/"q": applied one tick late, once x_next is known (or at day's end
+        with done=True). logp is the BEHAVIOUR log-prob (Brain.act), logp_pi is log π_T(a|x) at the
+        same moment; their unclipped ratio ρ = π_T/β weights the gradient for "pg" and "ac" (exactly
+        1.0 under softmax acting, so the EXP-01 rule is unchanged bit for bit; bounded by A/ε under
+        ε-greedy). "q" is off-policy and ignores it."""
+        rho = 1.0 if logp_pi is None else float(np.exp(logp_pi - logp))
+        if self.cfg.learner == "ac":
+            return self._online_ac(x, a, r, x_next, done, rho)
+        if self.cfg.learner == "q":
+            return self._online_q(x, a, r, x_next, done)
+        self._trace_step(x, a, self.cfg.lam, self._pg_lesson(r), rho)
+
+    def _pg_lesson(self, r):
+        """"pg" online lesson: raw drive change minus the running baseline rbar."""
+        self.rbar = 0.99 * self.rbar + 0.01 * r
+        return r - self.rbar
+
+    def _trace_step(self, x, a, decay, lesson, rho=1.0):
+        """Shared online actor step (pg and ac): e <- decay*e + ρ·grad log π(a|x);
+        theta += day_lr * lesson * e. Same operations, same order, for both learners."""
+        g = self.brain.grad_logpi(x[None, :], np.array([a]))
         if self.trace is None:
             self.trace = {k: np.zeros_like(self.brain.theta[k]) for k in self.brain.theta}
         for k in self.trace:
-            self.trace[k] = self.cfg.lam * self.trace[k] + rho * g[k][0]
-        self.rbar = 0.99 * self.rbar + 0.01 * r
+            self.trace[k] = decay * self.trace[k] + rho * g[k][0]
         for k in self.brain.theta:
-            self.brain.theta[k] += self.cfg.day_lr * (r - self.rbar) * self.trace[k]
+            self.brain.theta[k] += self.cfg.day_lr * lesson * self.trace[k]
+
+    def _online_ac(self, x, a, r, x_next, done, rho=1.0):
+        """Actor-critic(lambda), Sutton & Barto 2018 sec 13.5: critic TD(0); actor trace decays at
+        gamma*lam (the textbook AC(lambda) trace; with a TD-error lesson a decay above gamma would
+        over-count credit). Amendment A14: the online lesson is the RAW delta in drive units, used
+        exactly where "pg" uses (r - rbar), same day_lr, same _trace_step. Differences from "pg"
+        online: (i) baseline rbar -> V(x); (ii) bootstrap gamma*(1-done)*V(x'); (iii) KNOWN third
+        difference: trace decay gamma*lam = 0.855 vs pg's lam = 0.95, and the trace is cleared at a
+        terminal transition (end of day). The running-scale standardisation is used only at night
+        (where "pg" also standardises R per day); online deltas still feed that scale."""
+        xn = x if x_next is None else x_next
+        d = self.critic.update(x[None, :], [r], xn[None, :], [float(done)], self.cfg.alpha_v)[0]
+        self._td_day.append(abs(float(d)))
+        self._trace_step(x, a, self.cfg.gamma * self.cfg.lam, d, rho)
+        if done:
+            self.trace = None
+
+    def _online_q(self, x, a, r, x_next, done):
+        """Online Q-learning on Q = -F: y = r + gamma*(1-done)*max Q(x'), one semi-gradient step."""
+        xn = x if x_next is None else x_next
+        y = q_targets(self.brain, [r], xn[None, :], [float(done)], self.cfg.gamma)
+        self._td_day.append(self.brain.learn_q(x[None, :], np.array([a]), y, self.cfg.alpha_q))
+
+    def _flush_pending(self):
+        """End of the waking day: the last transition is terminal (no bootstrap over the night)."""
+        if self._pending is not None:
+            self.online_learn(*self._pending, x_next=None, done=True); self._pending = None
 
     # ---- night -----------------------------------------------------------------------------
     def sleep(self, surprise: float):
         c = self.cfg
-        self.event("sleep_start", surprise=round(surprise, 5), H=self.n_units())
+        self.event("sleep_start", surprise=round(surprise, 5), H=self.n_units(),
+                   wake_entropy=(round(self.brain.entropy(self.cache.days[-1][0]), 4)
+                                 if self.brain and self.cache.days else None))
         if self.brain and c.sleep != "none" and self.cache.days:
             if c.sleep == "noise":
                 # perturb by the same norm a replay night would have moved the weights
                 before = self.brain.snapshot()
+                cst = self.critic.state() if self.critic else None
                 self._replay(today_only=False)
+                if self.critic: self.critic.restore(cst)
                 norm = np.sqrt(sum(((self.brain.theta[k] - before[k]) ** 2).sum() for k in before))
                 self.brain.theta = before
                 for k in self.brain.theta:
@@ -247,16 +378,49 @@ class Life:
     def _replay(self, today_only: bool):
         """Interleaved replay: every cached day shuffled together, importance-corrected."""
         c = self.cfg
-        X, a, R, lp = self.cache.batch_source(today_only)
+        if c.learner != "pg":
+            return self._replay_td(today_only)
+        X, a, R, lp, lpi = self.cache.batch_source(today_only)
+        bw = np.exp(lpi - lp)                  # π_T,old/β, unclipped; exactly 1.0 under softmax acting
         n = len(a); clipped = []
         for _ in range(c.sleep_epochs):
             order = self.rng.permutation(n)
             for i in range(0, n, c.batch):
                 idx = order[i:i + c.batch]
-                clipped.append(self.brain.learn(X[idx], a[idx], R[idx], logp_old=lp[idx], clip=c.clip))
+                clipped.append(self.brain.learn(X[idx], a[idx], R[idx], logp_old=lpi[idx], clip=c.clip,
+                                                beh_weight=bw[idx]))
         self.instr = {"clip_frac": round(float(np.mean(clipped)), 4),
                       "entropy": round(self.brain.entropy(X), 4),
                       "w_norm": round(float(np.sqrt(sum((self.brain.theta[k] ** 2).sum() for k in ("w", "u", "v")))), 4)}
+
+    def _replay_td(self, today_only: bool):
+        """Night replay for "ac" and "q": cached transitions, all days shuffled together, same
+        epochs/batch as "pg". "ac": per minibatch, delta from the CURRENT critic, critic TD(0) step
+        (batch mean, step alpha_v), actor step on delta/scale, IS-clipped as in "pg".
+        "q": per minibatch, targets from the current Q, one learn_q step (batch mean, step alpha_q),
+        no IS weighting (Q-learning is off-policy)."""
+        c = self.cfg
+        X, a, r, lp, Xn, done, lpi = self.cache.transitions(today_only)
+        bw = np.exp(lpi - lp)
+        n = len(a); clipped = []; tds = []
+        for _ in range(c.sleep_epochs):
+            order = self.rng.permutation(n)
+            for i in range(0, n, c.batch):
+                idx = order[i:i + c.batch]
+                if c.learner == "ac":
+                    d = self.critic.update(X[idx], r[idx], Xn[idx], done[idx], c.alpha_v)
+                    tds.append(float(np.abs(d).mean()))
+                    clipped.append(self.brain.learn(X[idx], a[idx], d / self.critic.scale(),
+                                                    logp_old=lpi[idx], clip=c.clip, beh_weight=bw[idx]))
+                else:
+                    y = q_targets(self.brain, r[idx], Xn[idx], done[idx], c.gamma)
+                    tds.append(self.brain.learn_q(X[idx], a[idx], y, c.alpha_q))
+        self.instr = {"clip_frac": round(float(np.mean(clipped)), 4) if clipped else None,
+                      "entropy": round(self.brain.entropy(X), 4),
+                      "w_norm": round(float(np.sqrt(sum((self.brain.theta[k] ** 2).sum() for k in ("w", "u", "v")))), 4),
+                      "td_abs": round(float(np.mean(tds)), 6),
+                      "td_abs_day": round(float(np.mean(self._td_day)), 6) if self._td_day else None}
+        self._td_day = []
 
     # ---- the life --------------------------------------------------------------------------
     def run(self) -> dict:
@@ -267,6 +431,7 @@ class Life:
                 self.wake_tick()
                 if not self.body.alive: break
             if not self.body.alive: break
+            self._flush_pending()
             surprise = self.cache.close_day(c.lam, c.cache_days)
             self.sleep(surprise)
             if not self.body.alive: break
@@ -278,7 +443,11 @@ class Life:
             np.savez_compressed(os.path.join(self.dir, "brain.npz"),
                                 **{f"{k}_{i}": v for i, s in enumerate(self._brains) for k, v in s.items()})
         summary = self.summary()
-        meta = {"config": _cfg_dict(c), "actions": ACTIONS, "source_hash": source_hash(),
+        cfgd = _cfg_dict(c)
+        if self.brain:                      # the EFFECTIVE brain config (dim, act_mode), not cfg.brain
+            cfgd["brain"] = _cfg_dict(self.brain.cfg)
+        cfgd["input_names"] = self.senses.names()
+        meta = {"config": cfgd, "actions": ACTIONS, "source_hash": source_hash(),
                 "commit": git_commit(), "seconds": round(time.time() - t0, 2), "summary": summary,
                 "world_ledger": asdict(self.world.ledger)}
         json.dump(meta, open(os.path.join(self.dir, "meta.json"), "w"), indent=1)

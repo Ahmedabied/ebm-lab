@@ -38,6 +38,14 @@ class Senses:
         """Length of the flat sensation vector x: 12, or 15 with sign features."""
         return DIM_SIGN if self.cfg.sign_features else DIM
 
+    def names(self) -> list[str]:
+        """Human names of the dims of x, in order (written to meta.json for the viewer/export)."""
+        notes = ("A", "B", "C")
+        n = [f"contrast_{k}" for k in notes] + [f"mean_{k}" for k in notes] + [f"change_{k}" for k in notes]
+        n += ["body_E", "body_X"]
+        if self.cfg.sign_features: n += [f"sign_{k}" for k in notes]
+        return n + ["bias"]
+
     def signs(self, left: np.ndarray, right: np.ndarray) -> np.ndarray:
         """Per-note ternary sign of the left-right difference with a dead zone: +1 / 0 / -1.
         Mirrors TabularQ._state exactly (d > dead -> +1, d < -dead -> -1, else 0)."""

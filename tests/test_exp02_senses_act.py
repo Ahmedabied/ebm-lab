@@ -167,7 +167,9 @@ def test_unknown_act_mode_raises():
 
 
 # ---- online learning with the IS ratio -------------------------------------------------------
-def test_online_learn_weights_gradient_by_clipped_ratio(tmp_path):
+def test_online_learn_weights_gradient_by_unclipped_behaviour_ratio(tmp_path):
+    """Session-03 referee fix: the behaviour ratio π_T/β is NOT clipped (clipping made the estimator
+    baseline-dependent with a possibly wrong sign); it is bounded by A/ε because β ≥ ε/A."""
     cfg = SimConfig(seed=4, policy="ebm", day_learning=True, runs_dir=str(tmp_path), clip=1.0)
     cfg.brain.act_mode = "egreedy"; cfg.brain.eps = 0.05
     L = Life(cfg)
@@ -176,11 +178,18 @@ def test_online_learn_weights_gradient_by_clipped_ratio(tmp_path):
     for a, lb in ((greedy, np.log(1 - 0.05 + 0.05 / A)), ((greedy + 1) % A, np.log(0.05 / A))):
         L.trace = None
         g = L.brain.grad_logpi(x[None, :], np.array([a]))
-        pi = np.exp(L.brain.logp(x[None, :], np.array([a]))[0])
-        rho = np.clip(pi / np.exp(lb), 0.0, 2.0)
-        L.online_learn(x, a, 0.0, lb)                    # r = rbar = 0: theta stays, trace is set
+        lpi = float(L.brain.logp(x[None, :], np.array([a]))[0])
+        rho = np.exp(lpi - lb)
+        L.online_learn(x, a, 0.0, lb, lpi)               # r = rbar = 0: theta stays, trace is set
         for k in g: assert np.allclose(L.trace[k], rho * g[k][0])
-    assert rho == 2.0                                    # off-greedy action: ratio ~10, clipped
+    assert 2.0 < rho <= A / 0.05                         # off-greedy action: ratio ~10, NOT clipped
+
+
+def test_softmax_behaviour_ratio_is_exactly_one(tmp_path):
+    cfg = SimConfig(seed=5, policy="ebm", day_learning=True, days=2, day_len=60, runs_dir=str(tmp_path))
+    L = Life(cfg); L.run()
+    X, a, R, lp, lpi = L.cache.batch_source(False)
+    assert np.array_equal(lp, lpi) and np.all(np.exp(lpi - lp) == 1.0)
 
 
 # ---- determinism and bit-for-bit default path ------------------------------------------------
