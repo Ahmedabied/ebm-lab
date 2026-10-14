@@ -1,7 +1,9 @@
 # Research 07 — Proof of possibility: can a body-taught energy-based brain learn to forage at all?
 
 **Date:** 2026-10-14 (session 03). **Author:** the orchestrator (Fable), while the swarm built EXP-02.
-**Status:** draft; every numbered claim below is to be attacked by two hostile referees before it stands.
+**Status:** revised after two hostile referees (session 03). Referee 2 (biology/theory) found a reversed
+citation (Schroll 2006) and six over-claims; all rewritten in place with the referee's sourced wording.
+Referee 1 (mathematics) findings are recorded in §6 once received.
 Scripts and raw json: `research/07-proof-of-possibility/` (seeds 300–339, declared proof seeds; not used
 for tuning any learner). Commit at the runs: see each json's `commit` field.
 
@@ -97,43 +99,67 @@ Recorded as a limitation, not a mechanism.
   result is strongest. This is the mathematical case for an **entropy bonus** instead of a low T (R1's
   recommendation, `research/03`), and for a smaller nightly step.
 - Sallans & Hinton, JMLR 5 (2004): state-action values as **negative free energies** of a product of
-  experts, learned by TD. EXP-02's `ebm-td`/`ebm-all` arms are exactly this learner on our features;
-  Heess, Silver & Teh 2012 and Elfwing et al. 2013 extend it. So "an EBM that forages by Q-learning" is
-  not speculative; the question EXP-02 asks is which of Q's ingredients our policy-gradient EBM is missing.
+  experts (an RBM with the hidden units summed out, the same function class as our F), learned by
+  **SARSA with Boltzmann exploration** (on-policy, actions by Gibbs sampling); they note there is no
+  convergence proof for the rule in general. EXP-02's `ebm-td`/`ebm-all` arms use the **same function
+  class** (Q = −F) but **off-policy Q-learning with ε-greedy acting**, so they are a close relative, not
+  the same learner (referee correction, session 03). Heess, Silver & Teh 2012 and Elfwing et al. 2013
+  extend the family. So "an EBM that forages by value learning" has precedent; EXP-02 asks which of Q's
+  ingredients our policy-gradient EBM is missing.
 - Keramati & Gutkin, eLife 2014: with reward defined as the reduction of a drive D(h) = distance of the
-  internal state from its setpoint, **maximising reward is equivalent to homeostasis** (their "physiological
-  rationality"), and discounting selects the shortest path to the setpoint. Our body's r = D_before − D_after
-  is their reward. The creature's objective is therefore well-posed: a policy that maximises the body's
-  lessons is a policy that keeps the body alive. This is the formal content of "the body teaches it".
+  internal state from its setpoint, their Proposition states that **for deterministic trajectories that
+  end at the setpoint, with γ < 1, maximising the discounted sum of drive reductions equals minimising
+  the discounted sum of drive** (a telescoping identity, SDR = D₀ + (γ−1)·SDD, valid for any drive
+  function), and that any discounting selects the shortest path to the setpoint. Our body's
+  r = D_before − D_after is their reward and our D fits their class. But our runs end at death or at a
+  day boundary, our world is stochastic, and the EXP-01 learner optimises a standardised λ-return, so
+  the theorem **motivates** the objective and does not prove that maximising lessons keeps the body alive
+  (referee correction). "The body teaches it" is well-posed as an objective; its sufficiency is empirical.
 
 ## 3. Precedent: biology does this, with two ingredients we lack
 
 **Within-life learning of odour valence from an internal body signal exists in ~300-neuron and
 ~10,000-neuron nervous systems.**
-- *C. elegans* (302 neurons): worms that ingest pathogenic bacteria learn to **avoid the odour** of that
-  bacterium; the teaching signal is **serotonin released by the ADF chemosensory neurons after infection**,
-  acting through the MOD-1 channel (Zhang, Lu & Bargmann, *Nature* 438:179, 2005). A gut-state signal
-  retunes a sense: that is the creature's law §0 in a real animal. Worms also learn to avoid NaCl after
-  NaCl is paired with **starvation** (Saeki, Yamamoto & Iino, *J Exp Biol* 2001; insulin signalling in
-  ASER), i.e. the energy state itself is the teacher.
-- *Drosophila* larva (~10k neurons): sugar ingestion drives **dopaminergic pPAM neurons** that teach an
-  odour's value at the mushroom body; optogenetic activation of those neurons substitutes for the reward
-  (Schroll et al., *Curr Biol* 2006; Saumweber et al., *Nat Commun* 2018, full connectome-level map of
-  the larval mushroom body's reward and punishment inputs). Larvae learn an odour–sugar association from
-  **a single pairing** (Weiglein et al., *Learn Mem* 2019).
+- *C. elegans* (302 neurons): after exposure to pathogenic bacteria, worms learn to **avoid the odour**
+  of that bacterium; serotonin rises in the ADF chemosensory neurons and acts through the MOD-1
+  channel in interneurons, and the authors *propose* that this serotonin increase is the negative
+  reinforcer of infection (Zhang, Lu & Bargmann, *Nature* 438:179, 2005; the abstract hedges with "may
+  represent", and ingestion itself is not shown to be required). An internal-state signal retunes a
+  sense: that is the creature's law §0 in a real animal. Worms also lose their NaCl attraction after
+  NaCl is paired with the **absence of food** (Saeki, Yamamoto & Iino, *J Exp Biol* 2001: associative,
+  "not merely adaptation or habituation"; a serotonin food signal partly blocks it, so whether the
+  teacher is sensed absence of food or metabolic state is not resolved). Later Iino-lab work located
+  the switch in insulin/PI3K signalling at ASER synapses (Ohno et al., *Science* 345, 2014).
+- *Drosophila* larva (~10k neurons): sugar reward, signalled by **taste and by nutrient value separately**
+  (arabinose is only sweet, sorbitol only nutritious; both teach), drives the **dopaminergic pPAM
+  neurons** that teach an odour's value at the mushroom body; pPAM are necessary for odour–sugar
+  learning and their optogenetic activation is sufficient as a reward (Rohwedder et al., *Curr Biol*
+  26:661, 2016; **not** Schroll 2006, which found dopaminergic activation aversive and octopaminergic
+  appetitive in the larva: a citation error in the first draft, caught by a referee). Saumweber et al.
+  (*Nat Commun* 2018) give the single-cell map and functional screen of the larval mushroom body's
+  input and output neurons. Larvae learn an odour–sugar association from **a single pairing**
+  (Weiglein et al., *Learn Mem* 26:109, 2019).
 
-**Claim 3.1.** Body-taught valence learning, in a life, in a tiny brain, is an experimental fact.
+**Claim 3.1.** Valence learning taught by an innate reinforcer (sugar taste or nutrient, infection,
+absence of food), in a life, in a tiny brain, is an experimental fact. "Body-taught" in the strict sense
+of *energy state as teacher* is supported for the larva's nutrient route and is unresolved for the worm.
 
 **But every one of these animals has two things our v0 creature lacks.**
-- **An innate prior.** E. coli's chemotaxis is entirely innate: the run-and-tumble bias and the
-  methylation adaptation (CheR/CheB) that makes it a temporal-derivative detector are not learned
-  (Berg; reviews listed below). Larvae and worms are born attracted to specific odours and salts; learning
-  *retunes* an existing valence. No organism I could find learns food valence from a uniform prior.
-  This is the biological argument for lever 2 (generations supply the prior) and for A7's finding that
-  the uniform start is itself a trap.
+- **An innate reinforcer and innate attractions.** E. coli's attractant preferences are genetically
+  fixed; its only within-life memory is a ~4 s methylation-based comparison (CheR/CheB) that tracks recent
+  concentration and assigns no value (Segall, Block & Berg, *PNAS* 1986); associative anticipation in
+  E. coli is acquired over generations, not within a life (Tagkopoulos et al., *Science* 2008; Mitchell
+  et al., *Nature* 2009). Larvae and worms are born attracted to specific odours and salts. In every
+  case found, **the reinforcer's value is innate** (sugar, malaise, hunger) and **the plasticity sites are
+  fixed**; the value of the *predicting* stimulus can be learned from neutral (Schroll 2006: "a positive
+  or negative value is assigned to a previously neutral stimulus"). Our creature has the first (the innate
+  drive) and lacks the second. This is the biological argument for lever 2 (generations supply the
+  prior) and for A7's finding that the uniform start is itself a trap.
 - **A structural prior on *where* learning happens.** In the larva the plasticity is at one synapse class
-  (KC→MBON), gated by a dopamine signal with a short eligibility window around the event. Our rule updates
-  ~100 parameters with one scalar lesson credited over ~20 ticks. That is the ~100-noisy-directions
+  (KC→MBON), gated by dopamine in a **timing-dependent** way: an odour before a DAN's activation yields
+  punishment memory, an odour at its termination yields relief memory (Weiglein et al., *J Comp Neurol*
+  2021; Thoener et al., *J Exp Biol* 2022). Our rule updates ~100 parameters with one scalar lesson
+  credited over ~20 ticks. That is the ~100-noisy-directions
   problem of Claim 2.2 in biological terms. It is also Ahmed's original idea ("one job: make
   connections"): a growth rule that adds a *specific* connection for a *specific* event, rather than a
   gradient on everything.
@@ -149,8 +175,10 @@ learning is the worm.
 - **Proved (by construction, 1.1):** the energy model can represent the forager.
 - **Measured (2.1):** the body's lesson carries enough signal per day to find it.
 - **Measured (2.2):** the current learner wastes it by committing after one night.
-- **Sourced (2, 3):** the objective is well-posed (Keramati–Gutkin); the learner type is known to work
-  (Sallans–Hinton); the biology does it, but never from a uniform prior and never with a global gradient.
+- **Sourced (2, 3):** the objective is well-posed and motivated, not proved sufficient, by Keramati–Gutkin;
+  the function class has value-learning precedent (Sallans–Hinton, SARSA); the biology learns stimulus
+  value from neutral, but always with an innate reinforcer, fixed plasticity sites, and never with a
+  global gradient.
 - **Not proved:** that *this* learner, fixed, learns within a life; that is EXP-02's job. Not proved:
   that generations supply a usable prior in our world; that is EXP-03's.
 - **Pre-registered consequence for EXP-02:** P2 (greedy helps most) now has a mechanism: argmax acts on
@@ -161,8 +189,13 @@ learning is the worm.
 - Zhang Y, Lu H, Bargmann CI. Pathogenic bacteria induce aversive olfactory learning in *C. elegans*. Nature 438:179–184 (2005). https://ideas.repec.org/a/nat/nature/v438y2005i7065d10.1038_nature04216.html
 - Saeki S, Yamamoto M, Iino Y. Plasticity of chemotaxis revealed by paired presentation of a chemoattractant and starvation in *C. elegans*. J Exp Biol 204:1757 (2001). https://cob.silverchair.com/jeb/article-pdf/204/10/1757/3144282/jexbio_204_10_1757.pdf
 - Schroll C et al. Light-induced activation of distinct modulatory neurons triggers appetitive or aversive learning in *Drosophila* larvae. Curr Biol 16:1741 (2006). doi 10.1016/j.cub.2006.07.023
-- Saumweber T et al. Functional architecture of reward learning in mushroom body extrinsic neurons of larval *Drosophila*. Nat Commun 9:1104 (2018). https://pmc.ncbi.nlm.nih.gov/articles/PMC6432171
-- Weiglein A et al. One-trial learning in larval *Drosophila*. Learn Mem 26 (2019). https://learnmem.cshlp.org/content/31/5/a053726/F1.expansion.html (via search; verify volume)
+- Rohwedder A et al. Four individually identified paired dopamine neurons signal reward in larval *Drosophila*. Curr Biol 26:661 (2016). doi 10.1016/j.cub.2016.01.012
+- Saumweber T et al. Functional architecture of reward learning in mushroom body extrinsic neurons of larval *Drosophila*. Nat Commun 9:1104 (2018). https://pmc.ncbi.nlm.nih.gov/articles/PMC5856778
+- Weiglein A et al. One-trial learning in larval *Drosophila*. Learn Mem 26:109–120 (2019). doi 10.1101/lm.049106.118
+- Weiglein A et al. J Comp Neurol (2021) doi 10.1002/cne.25037; Thoener J et al. J Exp Biol (2022) doi 10.1242/jeb.244565 (timing-dependent DAN teaching in the larva)
+- Ohno H et al. Role of synaptic phosphatidylinositol 3-kinase in a behavioral learning response in *C. elegans*. Science 345 (2014). doi 10.1126/science.1250709
+- Segall JE, Block SM, Berg HC. Temporal comparisons in bacterial chemotaxis. PNAS 83:8987 (1986). doi 10.1073/pnas.83.23.8987
+- Tagkopoulos I et al. Science 320:1313 (2008) doi 10.1126/science.1154456; Mitchell A et al. Nature 460:220 (2009) doi 10.1038/nature08112 (anticipation evolved over generations)
 - Mei J, Xiao C, Szepesvári C, Schuurmans D. On the global convergence rates of softmax policy gradient methods. ICML 2020. https://proceedings.mlr.press/v119/mei20b.html
 - Mei J, Xiao C, Dai B, Li L, Szepesvári C, Schuurmans D. Escaping the gravitational pull of softmax. NeurIPS 2020. https://proceedings.neurips.cc/paper/2020/hash/f1cf2a082126bf02de0b307778ce73a7-Abstract.html
 - Sallans B, Hinton GE. Reinforcement learning with factored states and actions. JMLR 5:1063 (2004). https://jmlr.org/papers/v5/sallans04a.html
