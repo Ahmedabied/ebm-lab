@@ -36,6 +36,10 @@ import numpy as np
 
 C0 = 0.01
 VMAX = 0.3
+# Fallback ONLY for runs whose meta.json predates config.input_names. This is the creature-v0 layout
+# (raw left/right antenna readings); from bb5b19d on, the 12 dims are opponent-coded
+# (contrast_*, mean_*, change_*, body_E, body_X, bias), so for those older runs the labels are
+# known to be approximate. run.json records which source was used ("input_names_source").
 INPUT_NAMES = ["L.A", "L.B", "L.C", "R.A", "R.B", "R.C", "dA", "dB", "dC", "E", "X", "bias"]
 
 
@@ -92,14 +96,17 @@ def ticks_to_columns(ticks):
     return cols
 
 
-INSTR_KEYS = ("clip_frac", "entropy", "w_norm")   # sleep_end instruments (R1/R2 sims); absent before
+# per-night instruments, copied as-is (None stays None) when the event carries them; absent before
+END_KEYS = ("clip_frac", "entropy", "w_norm", "td_abs", "td_abs_day")   # sleep_end (td_*: ac/q only)
+START_KEYS = ("surprise", "wake_entropy")                              # sleep_start
+INSTR_KEYS = START_KEYS + END_KEYS
 
 
 def read_brain(path, events):
     """brain.npz -> list of per-night dicts {night, t, day, H, u, ...every other param key...,
-    surprise, clip_frac, entropy, w_norm}. The i-th snapshot is taken just before the i-th
-    sleep_end event (sim.py), so that event supplies its time, day and instruments; the i-th
-    sleep_start supplies the night's surprise. Missing fields are simply left out."""
+    + the instruments in END_KEYS / START_KEYS}. The i-th snapshot is taken just before the i-th
+    sleep_end event (sim.py), so that event supplies its time, day and END_KEYS; the i-th
+    sleep_start supplies START_KEYS. Keys an event did not log are simply left out."""
     if not os.path.exists(path):
         return None
     z = np.load(path)
@@ -116,9 +123,11 @@ def read_brain(path, events):
         for name, key in by_i[i].items():
             d[name] = np.round(z[key], 4).tolist()
         d["H"] = int(np.asarray(z[by_i[i]["u"]]).shape[0]) if "u" in by_i[i] else None
-        if i < len(starts) and "surprise" in starts[i]:
-            d["surprise"] = starts[i]["surprise"]
-        for k in INSTR_KEYS:
+        if i < len(starts):
+            for k in START_KEYS:
+                if k in starts[i]:
+                    d[k] = starts[i][k]
+        for k in END_KEYS:
             if k in e:
                 d[k] = e[k]
         out.append(d)
@@ -147,6 +156,30 @@ def blend_table(cfg: dict) -> dict:
         return {"mode": mode, "table": None, "note": f"could not read BLENDS: {ex}"}
 
 
+def input_names(meta: dict, brain) -> tuple[list[str] | None, str]:
+    """(names, source). Names come from meta.json's config.input_names (written by sim.py from
+    Senses.names()). Older runs lack it: fall back to the legacy 12 only if the brain is 12 wide
+    (or there is no brain); otherwise None (the viewer then labels columns x0, x1, ...)."""
+    names = meta.get("config", {}).get("input_names")
+    if names:
+        return list(names), "meta"
+    width = len(brain[0]["u"][0]) if brain and brain[0].get("u") else None
+    if width in (None, len(INPUT_NAMES)):
+        return list(INPUT_NAMES), "fallback-legacy-12"
+    return None, "absent"
+
+
+def effective(meta: dict) -> dict:
+    """The brain settings the life actually ran with (meta.json stores the EFFECTIVE brain config
+    under config.brain since 9dd8c14; older runs store the requested one)."""
+    c = meta.get("config", {}); b = c.get("brain") or {}
+    is_ebm = c.get("policy") == "ebm"
+    return {"brain_dim": b.get("dim") if is_ebm else None,
+            "act_mode": b.get("act_mode", "softmax") if is_ebm else None,
+            "learner": c.get("learner", "pg") if is_ebm else None,
+            "T": b.get("T") if is_ebm else None}
+
+
 # ---- main ------------------------------------------------------------------------------------
 def export(run_dir: str, budget_mb: float = 5.0) -> dict:
     meta = json.load(open(os.path.join(run_dir, "meta.json")))
@@ -163,8 +196,14 @@ def export(run_dir: str, budget_mb: float = 5.0) -> dict:
         fields = z["fields"]
         urls = [data_url(_png_rgb(field_to_rgb(fields[i]))) for i in range(len(snap_t))]
 
+    names, names_src = input_names(meta, brain)
+    eff = effective(meta)
+    meta = {**meta, **eff, "input_names_source": names_src}
+    if brain and names is not None and len(brain[0].get("u", [[]])[0]) != len(names):
+        print(f"warning: u is {len(brain[0]['u'][0])} wide but there are {len(names)} input names",
+              file=sys.stderr)
     doc = {"format": "ebm-lab-run/1", "run_dir": run_dir, "meta": meta, "events": events,
-           "ticks": cols, "brain": brain, "input_names": INPUT_NAMES,
+           "ticks": cols, "brain": brain, "input_names": names, "input_names_source": names_src,
            "blends": blend_table({**meta["config"], "_source_hash_of_run": meta.get("source_hash")}),
            "sense": meta["config"].get("sense", {}),
            "world": {"H": meta["config"]["world"]["H"], "W": meta["config"]["world"]["W"]},
@@ -193,7 +232,8 @@ def export(run_dir: str, budget_mb: float = 5.0) -> dict:
                       "events": len(events), "snapshots_kept": len(doc["fields"]["t"]),
                       "snapshots_original": len(snap_t), "stride": stride,
                       "brain_nights": 0 if brain is None else len(brain),
-                      "has_F": cols["F"] is not None}))
+                      "has_F": cols["F"] is not None, "n_inputs": None if names is None else len(names),
+                      "input_names_source": names_src, **eff}))
     if size > budget:
         print(f"warning: run.json is {size/1048576:.2f} MB, over the {budget_mb} MB budget "
               "(tick arrays alone exceed it)", file=sys.stderr)

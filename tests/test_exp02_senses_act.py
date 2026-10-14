@@ -98,14 +98,18 @@ def test_sign_features_mirror_tabular_q_state():
 def test_life_builds_brain_with_senses_dim_and_does_not_mutate_config(tmp_path):
     for sign, d in ((False, 12), (True, 15)):
         cfg = SimConfig(seed=3, policy="ebm", days=2, day_len=40, day_learning=True,
-                        runs_dir=str(tmp_path))
+                        growth="timer", growth_every=1, runs_dir=str(tmp_path))
         cfg.sense.sign_features = sign
         L = Life(cfg)
         assert L.senses.dim == d and L.brain.cfg.dim == d
         assert L.brain.theta["w"].shape == (A, d) and L.brain.theta["u"].shape[1] == d
         assert cfg.brain.dim == 12                       # config untouched
+        H0 = L.brain.theta["u"].shape[0]
         L.run()                                          # runs through acting, learning, growth
-        assert L.brain.theta["u"].shape[1] == d
+        assert L.body.alive and L.day == cfg.days - 1    # both nights happened (growth had a chance)
+        H = L.brain.theta["u"].shape[0]
+        assert H > H0                                    # timer growth every night actually grew
+        assert L.brain.theta["u"].shape == (H, d)        # new units have the senses' width
 
 
 # ---- egreedy acting --------------------------------------------------------------------------
