@@ -163,3 +163,36 @@ def test_ac_online_lesson_is_raw_delta_not_standardised(tmp_path):
     L.online_learn(x, a, r, 0.0, x_next=xn, done=False)
     for k in before:
         assert np.allclose(L.brain.theta[k] - before[k], L.cfg.day_lr * d * g[k][0], atol=1e-12)
+
+
+# ---- A16: centred Q (session-03 referee) and A17: tabular_q_next ------------------------------
+def test_centred_q_is_zero_at_birth_and_after_growth_and_leaves_policy_and_gradient_unchanged():
+    from creature.brain import Brain, BrainConfig
+    rng = np.random.default_rng(0)
+    X = rng.normal(size=(20, DIM)).astype(np.float32); a = rng.integers(A, size=20)
+    plain = Brain(BrainConfig(dim=DIM, H0=4), np.random.default_rng(1))
+    cent = Brain(BrainConfig(dim=DIM, H0=4, centre=True), np.random.default_rng(1))
+    assert np.abs(cent.Q(X)).max() < 0.2 and np.abs(plain.Q(X)).min() > 2.5
+    assert np.allclose(cent.policy(X), plain.policy(X), atol=1e-12)
+    gp, gc = plain.grad_logpi(X, a), cent.grad_logpi(X, a)
+    assert all(np.allclose(gp[k], gc[k], atol=1e-12) for k in gp)
+    cent.add_units(3, np.random.default_rng(2))
+    assert np.abs(cent.Q(X)).max() < 0.3
+
+
+def test_q_mode_life_uses_centred_brain(tmp_path):
+    cfg = SimConfig(seed=3, policy="ebm", learner="q", days=1, day_len=20, runs_dir=str(tmp_path))
+    L = Life(cfg)
+    assert L.brain.cfg.centre and L.brain.cfg.act_mode == "egreedy" and not cfg.brain.centre
+
+
+def test_tabular_q_shipped_is_unchanged_and_next_variant_learns_from_next_sensation(tmp_path):
+    # shipped tabular_q bit-for-bit (values recorded on main 6b586f2 before A17): seeds 26 -> 5250, 27 -> 747
+    got = [Life(SimConfig(seed=s, policy="tabular_q", days=15, runs_dir=str(tmp_path))).run()["ticks_alive"]
+           for s in (26, 27)]
+    assert got == [5250, 747]
+    L = Life(SimConfig(seed=26, policy="tabular_q_next", days=2, day_len=50, runs_dir=str(tmp_path)))
+    assert L.policy.true_next
+    L.run()
+    assert L._pol_pending is None                     # flushed at day end
+    assert np.isfinite(L.policy.Q).all()

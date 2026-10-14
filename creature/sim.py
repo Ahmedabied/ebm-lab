@@ -192,11 +192,12 @@ class Life:
         # config is written to meta.json (law: provenance).
         bcfg = replace(cfg.brain, dim=self.senses.dim)
         if cfg.policy == "ebm" and cfg.learner == "q":
-            bcfg = replace(bcfg, act_mode="egreedy")
+            bcfg = replace(bcfg, act_mode="egreedy", centre=True)      # A16
         self.brain = Brain(bcfg, self.rng) if cfg.policy == "ebm" else None
         self.critic = Critic(cfg.gamma, cfg.scale_decay) if (self.brain and cfg.learner == "ac") else None
         self._pending = None               # "ac"/"q" online: (x, a, r, logp, logp_pi) awaiting x_next
         self._td_day = []                  # online |TD error| this day (instrument)
+        self._pol_pending = None           # baselines with true_next (A17): r awaiting the next sensation
         self.policy = None if self.brain else baselines.make(cfg.policy, self.rng)
         self.cache = Cache()
         self.trace = None
@@ -233,6 +234,10 @@ class Life:
         x = sens["x"]
         if self._pending is not None:      # the previous tick's transition now has its x_next
             self.online_learn(*self._pending, x_next=x, done=False); self._pending = None
+        if self._pol_pending is not None:  # A17: a true-next baseline learns from THIS sensation
+            self.policy.learn_tick({"left": sens["left"], "right": sens["right"], "body": self.body.state()},
+                                   self._pol_pending)
+            self._pol_pending = None
         if self.brain:
             a, Fx, logp = self.brain.act(x, self.rng)
             # log π_T(a|x) at acting time (no RNG): under softmax acting it equals logp bit for bit;
@@ -251,8 +256,15 @@ class Life:
             else:
                 self._pending = (x, a, r, logp, logp_pi)
         if self.policy is not None:
-            sens2 = {"left": sens["left"], "right": sens["right"], "body": self.body.state()}
-            self.policy.learn_tick(sens2, r)
+            if getattr(self.policy, "true_next", False):
+                self._pol_pending = r      # learns at the next tick, from the next sensation (A17)
+            else:
+                # EXP-01's shipped rule: s' is built from the PRE-move antenna readings (the same
+                # sensation that chose a) plus the new body state. A hostile referee (session 03)
+                # showed this is not textbook Q-learning: it mostly bootstraps from Q[s] itself. Kept
+                # as the pre-registered target of EXP-02; `tabular_q_next` is the corrected variant.
+                sens2 = {"left": sens["left"], "right": sens["right"], "body": self.body.state()}
+                self.policy.learn_tick(sens2, r)
         self.world.step(); self.world.regrow()
         # books and log (no RNG here)
         D = self.body.drive()
@@ -331,6 +343,8 @@ class Life:
         """End of the waking day: the last transition is terminal (no bootstrap over the night)."""
         if self._pending is not None:
             self.online_learn(*self._pending, x_next=None, done=True); self._pending = None
+        if self._pol_pending is not None:
+            self.policy.learn_terminal(self._pol_pending); self._pol_pending = None
 
     # ---- night -----------------------------------------------------------------------------
     def sleep(self, surprise: float):
@@ -461,7 +475,10 @@ class Life:
                 "poison": round(T["poison"], 4),
                 "mean_drive": round(T["drive_sum"] / max(T["ticks_alive"], 1), 5),
                 "first_food_t": T["first_food_t"],
-                "poison_bites_after_first": T["poison_bites_after_first"], "H": self.n_units()}
+                "poison_bites_after_first": T["poison_bites_after_first"], "H": self.n_units(),
+                # divergence instrument (referee, session 03): a learner whose theta overflowed
+                "theta_finite": bool(all(np.all(np.isfinite(v)) for v in self.brain.theta.values()))
+                if self.brain else True}
 
 
 def _cfg_dict(c):

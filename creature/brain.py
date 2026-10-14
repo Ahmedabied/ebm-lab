@@ -29,6 +29,9 @@ class BrainConfig:
     lr: float = 1.0                # pilot 01d (seeds 0-7 burned): batch-mean lr; 3 epochs > 10
     init_scale: float = 0.01       # near-uniform policy at birth (pilot 01: a turning bias traps
                                    # an untrained creature in loops; see findings)
+    centre: bool = False           # A16 (q mode): F += H·log 2 so Q = −F ≈ 0 at birth and stays
+                                   # ≈ 0 when a unit is grown. A per-action constant: the policy and
+                                   # every gradient are unchanged; only used where Q's level matters.
     act_mode: str = "softmax"      # "softmax": sample π_T | "egreedy": argmin F w.p. 1-ε, else uniform
                                    # (EXP-02). Learning stays the softmax PG at T in both modes; the
                                    # behaviour log-prob returned by act() feeds the IS ratio π_T/β.
@@ -67,7 +70,10 @@ class Brain:
         """Free energy for every action, shape (N, A). X is (N, dim)."""
         X = np.atleast_2d(X)
         th = self.theta
-        return -th["b"][None, :] - X @ th["w"].T - _softplus(self.pre(X)).sum(axis=1)
+        F = -th["b"][None, :] - X @ th["w"].T - _softplus(self.pre(X)).sum(axis=1)
+        if self.cfg.centre:
+            F = F + self.H * np.log(2.0)   # softplus(0) = log 2 per unit, removed (A16)
+        return F
 
     def policy(self, X: np.ndarray) -> np.ndarray:
         z = -self.F(X) / self.cfg.T
@@ -153,11 +159,13 @@ class Brain:
         """Semi-gradient Q-learning step on a batch: theta += alpha * mean_i (y_i - Q_i) dQ_i/dtheta.
         y is held fixed (computed by the caller before the step). Returns mean |y - Q| before the
         step (the TD-error instrument).
-        KNOWN LIMITATION (EXP-02, not changed by design): Q = -F includes sum_h softplus(c_h +
-        u_h.x + v_{h,a}), so at birth Q is ~H0*log 2 (~2.8 for H0=4) for every action, far from
-        Q* ~ r/(1-gamma) ~ -0.1; and a unit grown with v=0 adds softplus(c+u.x) ~ log 2 ~ 0.69 to
-        every action's Q. Greedy action is unchanged, but the TD error shifts by ~(gamma-1)*0.69 ~
-        -0.07 (large next to r ~ 1e-2). Downscaling (w,u,v *= 1-delta) also moves Q values."""
+        A16 (hostile referee, session 03): Q = -F includes sum_h softplus(c_h + u_h.x + v_{h,a}), so
+        WITHOUT centring Q starts at ~H0*log 2 (~2.8) for every action and each grown unit adds ~0.69.
+        With a learning brain that is not harmless: the TD error is large and negative in every
+        state and each step lowers only the taken action, so the greedy action lost its top spot
+        after its own update 64-69% of the time and the creature rotated through actions instead of
+        exploiting (pilot seeds 20-27: ebm-all 627 ticks uncentred vs 3729 centred). q mode therefore
+        runs with BrainConfig.centre=True (F += H*log 2). Downscaling still moves Q values slightly."""
         X = np.atleast_2d(X); a = np.asarray(a); y = np.asarray(y, dtype=np.float64)
         N = X.shape[0]
         td = y - self.Q(X)[np.arange(N), a]

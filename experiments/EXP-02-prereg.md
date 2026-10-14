@@ -127,3 +127,17 @@ seeds, metrics and predictions above are unchanged.
    on 96% of days; one night at the defaults collapses the policy (entropy < 0.15).
 8. **Percentile-bootstrap coverage** for G at n = 20 measured at 0.93–0.95 (referee simulation);
    accepted.
+9. **A16 (blocks-run defect found by a referee, fixed before the run):** q mode now uses a centred
+   free energy (Q ≈ 0 at birth). The alpha_q pilot is re-run on the centred code: grid {0.03, 0.1,
+   0.3}, seeds 20–27, on BOTH `ebm-td` and `ebm-all`; **alpha_q is chosen by the mean of the two
+   arms' mean ticks_alive** (declared here before that pilot runs).
+10. **A17:** EXP-01's `tabular_q` is not textbook Q-learning (s′ from the pre-move sensation). It stays
+    as the pre-registered target of G; `tabular_q_next` (textbook) is added as an **exploratory** arm.
+    The findings must report G against both and say which is which.
+11. **Critic referee (must-document, no change):** alpha_v ≥ 1 diverges (online gain x·(x−γx′) up to
+    2.75 ⇒ bound ≈ 0.73; 0.3 has 2.4× margin); on 64 fresh diagnostic seeds (1000–1063, not main
+    seeds) ac0.3 − pg = +362 [58, 677], i.e. ~+35%, not the pilot's +88% (best-of-8 inflation);
+    the night actor scale is an EMA updated per minibatch (depends on epoch count); the night critic
+    update is unweighted (off-policy); the day-end `done` makes δ spike to ≈ +|V| (20–40× the median)
+    every evening; night 0 collapses entropy for pg and ac alike (median ≈ 0.04).
+12. **Instrument:** `theta_finite` in every summary (divergence flag).

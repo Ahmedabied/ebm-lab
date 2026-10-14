@@ -23,6 +23,8 @@ arms = {
     "ebm-dn-critic": {**B0, "learner": "ac"},
     "ebm-td":        dict(TD),
     "ebm-all":       {**TD, "sense.sign_features": True},
+    # exploratory (declared before the run, A17): textbook Q-learning baseline, s' from the next sensation
+    "tabular_q_next":   {"policy": "tabular_q_next"},
 }
 res = run_arms(f"02_main_{blend}", arms, seeds=range(200, 220), days=15,
                world_overrides={"world.blend_mode": blend})

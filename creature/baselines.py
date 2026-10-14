@@ -62,9 +62,14 @@ class Oracle:
 
 
 class TabularQ:
+    """true_next=False is EXP-01's shipped learner: Life hands learn_tick the PRE-move sensation, so
+    s' differs from s only in the hunger bit (it mostly bootstraps from itself; referee, session 03).
+    true_next=True (`tabular_q_next`, A17): Life hands it the NEXT tick's sensation, textbook
+    Q-learning; the last tick of a day is terminal (learn_terminal)."""
     name = "tabular_q"
-    def __init__(self, rng, alpha=0.1, gamma=0.9, eps=0.1, dead=0.02):
+    def __init__(self, rng, alpha=0.1, gamma=0.9, eps=0.1, dead=0.02, true_next=False):
         self.alpha, self.gamma, self.eps, self.dead = alpha, gamma, eps, dead
+        self.true_next = true_next
         self.Q = rng.normal(0, 1e-3, (54, A)); self.prev = None   # tiny noise breaks argmax ties
     def _state(self, sens):
         s = 0
@@ -81,8 +86,12 @@ class TabularQ:
         s, a = self.prev
         s2 = self._state(sens_next)
         self.Q[s, a] += self.alpha * (r + self.gamma * self.Q[s2].max() - self.Q[s, a])
+    def learn_terminal(self, r):
+        s, a = self.prev
+        self.Q[s, a] += self.alpha * (r - self.Q[s, a])
 
 
 def make(name: str, rng):
     return {"random": Random, "braitenberg": Braitenberg, "oracle": Oracle,
-            "tabular_q": lambda: TabularQ(rng)}[name]()
+            "tabular_q": lambda: TabularQ(rng),
+            "tabular_q_next": lambda: TabularQ(rng, true_next=True)}[name]()
