@@ -3,7 +3,9 @@
 **Date:** 2026-10-14 (session 03). **Author:** the orchestrator (Fable), while the swarm built EXP-02.
 **Status:** revised after two hostile referees (session 03). Referee 2 (biology/theory) found a reversed
 citation (Schroll 2006) and six over-claims; all rewritten in place with the referee's sourced wording.
-Referee 1 (mathematics) findings are recorded in §6 once received.
+Referee 1 (mathematics) retracted two claims (2.3's correlation was computed on the wrong night; "cannot
+unlearn" is contradicted by the trajectories) and sharpened four; all rewritten in place, with the
+retracted wording quoted so the correction is visible.
 Scripts and raw json: `research/07-proof-of-possibility/` (seeds 300–339, declared proof seeds; not used
 for tuning any learner). Commit at the runs: see each json's `commit` field.
 
@@ -31,17 +33,22 @@ units, no learning, no sleep. `m1_existence.py construct`, 20 held-out seeds 320
 | xor | **ebm, hand-set k=3** | **5250 [5250, 5250]** | 23.0 | 3.43 |
 | xor | ebm, untrained | 1219 [1060, 1386] | 1.00 | 0.26 |
 
-**Claim 1.1.** The linear world is solved by a point in the EBM's parameter space with 3 non-zero
-numbers; it beats Braitenberg because the contrast feature steers from far away where Braitenberg's
-dead zone is silent. EXP-01's failure is therefore a failure of *learning*, not of capacity.
+**Claim 1.1.** The linear world is solved by a point in the EBM's parameter space with **2 non-zero
+numbers**: referee ablation on fresh seeds 340–349 shows the A-contrast pair alone reaches 5250 in both
+worlds; the C-aversion pair is not needed and costs food (24.7 with it vs 37.2 without, linear), and
+b[FORWARD] makes no difference. (First draft said "3 numbers" and offered an untested explanation for
+beating Braitenberg; both withdrawn.) EXP-01's failure is therefore a failure of *learning*, not of
+capacity.
 
 **Claim 1.2 (unplanned, important).** 5250 = 15 × (300 + 50) is the **ceiling** of `ticks_alive` at
 15 days. A good arm in EXP-02 will be censored at it; the gap fraction is then a lower bound. (Pre-registered
 days are not changed; the censoring is recorded here before the run.)
 
-**Claim 1.3 (unplanned, important).** The **xor world does not force the conjunction**: a pure
-A-chaser eats 3.4 poison per life and still lives the full 15 days, because at toxicity 0.5 the poison it
-eats is paid for by the 23 food it finds. P4's premise ("single-note signs cannot solve xor") is about
+**Claim 1.3 (unplanned, important).** The **xor world does not force the conjunction**: a true
+A-chaser (A weights only; the k=3 arm's C weights only react to sensor noise in xor, where nothing
+emits C) eats **6.15 poison** per life with 34 food and still lives the full 15 days on 10/10 seeds
+(referee rerun; the first draft's 3.4 was the k=3 arm), because at toxicity 0.5 the poison is paid for
+by the food. P4's premise ("single-note signs cannot solve xor") is about
 representation, and still stands; but the xor world as calibrated does not *punish* the linear solution
 enough to make the conjunction necessary for survival. This is a world-design decision for Ahmed
 (raise toxicity, or make poison deplete energy directly) and must not be changed inside EXP-02.
@@ -63,41 +70,59 @@ d_i = R_i · ∂logπ/∂w. Batch-means standard errors (blocks of 30 ticks, bec
 | xor | 1.59 [1.38, 1.79] | 38% | 98% | 4 (2–9) | −0.37 |
 
 **Claim 2.1.** The body's lesson is *not* data-starved for the key direction: one day of random
-walking gives a batch gradient that points the right way with ~2 standard errors. Three days would give
-SNR 3. A creature lives 3–4 days. So a learner that moved *only* this direction, by a sensible step,
-would learn within a life. This corrects `findings/01`'s diagnosis (see its CORRECTION block).
+walking gives a batch gradient that points the right way with ~2 standard errors (referee re-analysis:
+lag-1 autocorrelation of d_i is +0.09 and ~0 from lag 5, so 30-tick blocks are conservative; pooled
+SNR 1.78 linear / 1.50–1.67 xor; blocks of 60/100 give 1.9–2.1 pooled). Projected onto the full
+hand-set direction the pooled SNR is 1.41–1.67 because the C half is noise, and the per-day batch
+gradient has cosine only 0.20 (linear) / 0.17 (xor) with that direction. The A coordinate was chosen
+with hindsight, but the ablation in 1.1 shows A alone suffices. "A learner that moved only this
+direction would learn within a life" is an inference, not a measurement, and the SNR is from
+untrained creatures' days. This corrects `findings/01`'s diagnosis (see its CORRECTION block).
 
 **M3 (`m3_bias.py`).** What the actual learner does with that signal, EXP-01 `ebm` configuration,
 seeds 300–319: the resting turning bias |π(LEFT|x0) − π(RIGHT|x0)| at a featureless sensation
 
 | arm | after night 1 (mean [CI]) | last night | corr(|bias|, days survived) | days |
 |---|---|---|---|---|
-| ebm (learning) | **0.533 [0.341, 0.747]** | 0.698 | 0.006 | 2.50 |
-| ebm-nolearn | 0.014 [0.009, 0.020] | 0.014 | 0.348 | 2.95 |
+| ebm (learning) | **0.533 [0.341, 0.747]** | 0.698 | **−0.49** (night-1 bias; t = −2.35, n = 20, p ≈ 0.03) | 2.50 |
+| ebm-nolearn | 0.014 [0.009, 0.020] | 0.014 | n/a (bias ≈ 0 throughout) | 2.95 |
+
+(First draft reported r = 0.006: that was `m3_bias.py`'s correlation with the *last*-night bias, which is
+two clusters and uninformative. Retracted by referee 1; the night-1 value above is read from the same
+`m3_bias.json`. The resting bias at x0 is representative: 0.550 at the empirical mean sensation.)
 
 and end-of-night policy entropy on seeds 300–303 after night 1: 0.028, 0.092, 0.004, 0.139 (max 1.099).
 
-**Claim 2.2.** One night at T = 0.3, lr = 1.0 turns a near-uniform policy into a near-deterministic one
-(entropy < 0.15) with a large resting turn bias. The policy commits after ~300 samples whose gradient has
-SNR ≈ 2 on one direction and ≈ 0 on the other ~100 directions. Once committed, the softmax gradient
-vanishes (`tests/test_brain.py` saturation note) and the creature cannot unlearn. This is the
-"softmax gravity well" of Mei, Xiao, Dai, Li, Szepesvári & Schuurmans (NeurIPS 2020): convergence of
-softmax policy gradient depends strongly on initialisation and can stall near confident wrong policies.
+**Claim 2.2 (rewritten after referee 1).** One night at T = 0.3, lr = 1.0 turns a near-uniform policy
+into a near-deterministic one (entropy < 0.15) with a large resting turn bias. **The step is measured,
+not asserted:** on night 1 |Δθ| = 0.68–1.39 against |θ₀| = 0.087–0.093 (8–16× the whole initial
+norm; each of the ~15 batch steps is 0.08–0.19, already the size of θ₀). The gradient is not "≈ 0 on the
+other ~100 directions": over all 103 parameters the median |SNR| is 0.82 (0.67 if pure noise), 7.3%
+exceed 2, and the **B-contrast pair carries SNR +1.40/−1.38** (food outnumbers poison, so B, which
+both emit, is informative; the world comment "B carries no information" is wrong for the gradient).
+And **the committed policy does unlearn, violently**: in `m3_bias.json` seed 313 goes +0.99 → −1.00
+overnight, seed 318 +0.64 → −1.00, seed 307 FORWARD 0.99 → LEFT 0.99, seed 316 FORWARD → LEFT → FORWARD.
+The first draft's "once committed … cannot unlearn" and the gravity-well reading are **retracted**:
+this is step-size instability (lurching between corners), not a stall. Lowering lr to 0.1 or raising T
+to 1.0 each keep night-1 entropy at 0.68–0.94; a logit-equivalent rescaling (T 1, lr 11.1, init 0.033)
+collapses identically, so "too large a step" and "too low T" are **one knob** (lr/T²), not two fixes.
 
-**Claim 2.3 (what M3 does not show).** The bias magnitude does not predict days survived *within* the
-learner group (r = 0.006). So "acquired turning bias" is demonstrated, but it is not shown to be the
-proximate cause of death; a collapsed policy fails in several ways (bias, wrong note, wrong sign on C).
-Recorded as a limitation, not a mechanism.
+**Claim 2.3 (rewritten).** The night-1 resting bias *does* predict days survived within the learner
+group (r = −0.49, exploratory, n = 20; lives that collapse onto FORWARD have bias ≈ 0 while just as
+collapsed). So acquired turning bias is one route by which the oversized step kills, not the only one.
 
 **Theory it rests on (sources checked 2026-10-14).**
 - The learning rule is REINFORCE for a Boltzmann policy (Williams 1992; Sutton et al. 2000). Unbiased,
   high variance; the day-return standardisation makes the step scale-free but not the variance.
-- Mei et al. ICML 2020, *On the Global Convergence Rates of Softmax Policy Gradient Methods*: true-gradient
-  softmax PG converges at O(1/t) with initialisation-dependent constants; **entropy regularisation gives
-  a linear rate** (the conference talk restricts the linear rate to the bandit case; arXiv v3 gives
-  O(e^{−ct}) with explicit constant). Our 3-action, near-bandit setting is close to the case where the
-  result is strongest. This is the mathematical case for an **entropy bonus** instead of a low T (R1's
-  recommendation, `research/03`), and for a smaller nightly step.
+- Mei et al. ICML 2020, *On the Global Convergence Rates of Softmax Policy Gradient Methods*: with
+  **exact gradients and tabular softmax** (one logit per state-action, μ(s) > 0), unregularised softmax PG
+  converges at O(1/t) with initialisation-dependent constants, and **entropy regularisation gives a linear
+  rate toward the regularised (biased) optimum** for general MDPs (Theorem 6; the first draft's "bandit
+  only" was wrong, and its "our setting is close" over-claimed). No theorem in either Mei paper covers our
+  case: shared linear + hidden-unit parameters over a continuous context, stochastic REINFORCE on ~300
+  samples, λ-credit, clipping, per-day standardisation. What they honestly supply: a reason to expect
+  entropy regularisation to help and a warning about sensitivity to initialisation. R1's entropy-bonus
+  recommendation (`research/03`) stands on that, and on the one-knob finding in 2.2 (lr/T²).
 - Sallans & Hinton, JMLR 5 (2004): state-action values as **negative free energies** of a product of
   experts (an RBM with the hidden units summed out, the same function class as our F), learned by
   **SARSA with Boltzmann exploration** (on-policy, actions by Gibbs sampling); they note there is no
@@ -174,16 +199,17 @@ learning is the worm.
 
 - **Proved (by construction, 1.1):** the energy model can represent the forager.
 - **Measured (2.1):** the body's lesson carries enough signal per day to find it.
-- **Measured (2.2):** the current learner wastes it by committing after one night.
+- **Measured (2.2):** the current learner wastes it with a nightly step 8–16× its initial weight norm,
+  lurching between near-deterministic policies from night to night; lr/T² is the one knob.
 - **Sourced (2, 3):** the objective is well-posed and motivated, not proved sufficient, by Keramati–Gutkin;
   the function class has value-learning precedent (Sallans–Hinton, SARSA); the biology learns stimulus
   value from neutral, but always with an innate reinforcer, fixed plasticity sites, and never with a
   global gradient.
 - **Not proved:** that *this* learner, fixed, learns within a life; that is EXP-02's job. Not proved:
   that generations supply a usable prior in our world; that is EXP-03's.
-- **Pre-registered consequence for EXP-02:** P2 (greedy helps most) now has a mechanism: argmax acts on
-  weak correct weights *without* committing the softmax; it is immune to the gravity well. P1's ceiling
-  arm may be censored at 5250.
+- **Pre-registered consequence for EXP-02:** P2 (greedy helps most) has a candidate mechanism: argmax
+  acts on weak correct weights without needing a large logit step, and ε keeps every action sampled. The
+  "immune to the gravity well" phrasing is withdrawn with 2.2. P1's ceiling arm may be censored at 5250.
 
 ## 5. Sources
 - Zhang Y, Lu H, Bargmann CI. Pathogenic bacteria induce aversive olfactory learning in *C. elegans*. Nature 438:179–184 (2005). https://ideas.repec.org/a/nat/nature/v438y2005i7065d10.1038_nature04216.html
