@@ -75,6 +75,16 @@ class Brain:
         """Sample an action. Returns (a, F(x, ·), log π(a|x)); the log-prob is cached so that
         sleep replay can correct for the policy having moved since (off-policy ratio)."""
         Fx = self.F(x[None, :])[0]
+        if getattr(self.cfg, "act_mode", "softmax") == "egreedy":
+            # MINIMAL GUARD (learners builder, EXP-02): the senses+acting builder owns act_mode/eps
+            # on BrainConfig; this branch exists only so learner="q" can act before that merge.
+            # Behaviour prob per the contract: (1-eps)+eps/A on argmin-F (first index on ties),
+            # eps/A otherwise.
+            eps = getattr(self.cfg, "eps", 0.1)
+            greedy = int(np.argmin(Fx))
+            a = int(rng.integers(A)) if rng.random() < eps else greedy
+            pa = (1.0 - eps) + eps / A if a == greedy else eps / A
+            return a, Fx, float(np.log(pa))
         p = self.policy(x[None, :])[0]
         a = int(rng.choice(A, p=p))
         return a, Fx, float(np.log(p[a]))
@@ -107,6 +117,38 @@ class Brain:
         g["c"] = SC.sum(axis=2)                              # (N, H)
         g["u"] = g["c"][:, :, None] * X[:, None, :]          # (N, H, dim)
         return g
+
+    def grad_negF(self, X: np.ndarray, a: np.ndarray) -> dict:
+        """Per-sample gradient of Q(x,a) = -F(x,a) w.r.t. theta (learner="q", EXP-02).
+        Same dict shapes as grad_logpi, with coef = onehot(a) and no 1/T (no partition term:
+        Q-learning regresses the energy of the taken action itself)."""
+        N = X.shape[0]
+        S = _sigmoid(self.pre(X))                           # (N, H, A)
+        coef = np.zeros((N, A)); coef[np.arange(N), a] = 1.0
+        g = {}
+        g["b"] = coef
+        g["w"] = coef[:, :, None] * X[:, None, :]
+        SC = S * coef[:, None, :]
+        g["v"] = SC
+        g["c"] = SC.sum(axis=2)
+        g["u"] = g["c"][:, :, None] * X[:, None, :]
+        return g
+
+    def Q(self, X: np.ndarray) -> np.ndarray:
+        """Action values in "q" mode: Q(x, a) = -F(x, a), shape (N, A)."""
+        return -self.F(X)
+
+    def learn_q(self, X: np.ndarray, a: np.ndarray, y: np.ndarray, alpha: float) -> float:
+        """Semi-gradient Q-learning step on a batch: theta += alpha * mean_i (y_i - Q_i) dQ_i/dtheta.
+        y is held fixed (computed by the caller before the step). Returns mean |y - Q| before the
+        step (the TD-error instrument)."""
+        X = np.atleast_2d(X); a = np.asarray(a); y = np.asarray(y, dtype=np.float64)
+        N = X.shape[0]
+        td = y - self.Q(X)[np.arange(N), a]
+        g = self.grad_negF(X, a)
+        for k in self.theta:
+            self.theta[k] += alpha * np.tensordot(td, g[k], axes=(0, 0)) / N
+        return float(np.abs(td).mean())
 
     def learn(self, X: np.ndarray, a: np.ndarray, R: np.ndarray, lr: float | None = None,
               logp_old: np.ndarray | None = None, clip: float = 0.2) -> float:

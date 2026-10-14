@@ -4,7 +4,7 @@ One creature, one world, one RNG. Everything the creature does passes through he
 everything that happens is written to runs/<label>/<seed>/ so the viewer and the metrics read
 the same record. Logging never draws from the RNG.
 """
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field, asdict, fields, replace
 import hashlib, json, os, time
 import numpy as np
 from .world import World, WorldConfig
@@ -36,6 +36,14 @@ class SimConfig:
     downscale: float = 0.01
     cache_days: int = 3
     clip: float = 1.0              # importance-ratio clip half-width for replay; pilot 01d: 1.0 > 0.2
+    # EXP-02 learners (interface contract in experiments/EXP-02-prereg.md)
+    learner: str = "pg"            # pg (EXP-01 day-return REINFORCE) | ac (linear critic, TD error
+                                   # lesson) | q (Q = -F, Q-learning, epsilon-greedy acting)
+    gamma: float = 0.9             # TD discount for "ac" and "q" (tabular Q's gamma)
+    alpha_v: float = 0.1           # critic step size ("ac"); set by pilot 02a (seeds 20-27)
+    alpha_q: float = 0.01          # Q-mode step size ("q"); set by pilot 02a (seeds 20-27)
+    scale_decay: float = 0.99      # "ac": EMA decay of delta^2 for the actor's running scale
+                                   # (~100-tick memory, i.e. a third of a day)
     # growth
     growth: str = "surprise"       # surprise | timer | none
     growth_thresh: float = 0.005   # std of the day's raw lessons above this -> eventful day -> grow
@@ -69,8 +77,58 @@ def git_commit() -> str:
         return "unknown"
 
 
+class Critic:
+    """Linear state-value critic for learner="ac": V(x) = v.x (x carries a bias dim).
+    v is NOT part of brain.theta. It is sized lazily from the first x it sees, so it follows
+    whatever sensation dim the senses produce (12, or 15 with sign features).
+    It also keeps the running scale of the TD error used to standardise the actor's lesson:
+    m <- beta*m + (1-beta)*mean(delta^2), bias-corrected like Adam (m / (1 - beta^n)), so the
+    first lessons are not inflated by a zero-initialised EMA."""
+    def __init__(self, gamma: float, beta: float = 0.99, floor: float = 1e-3):
+        self.gamma, self.beta, self.floor = gamma, beta, floor
+        self.v = None; self.m = 0.0; self.n = 0
+    def _ensure(self, d: int):
+        if self.v is None:
+            self.v = np.zeros(d)
+        elif self.v.shape[0] != d:
+            raise ValueError(f"critic sized for dim {self.v.shape[0]}, got {d}")
+    def V(self, X) -> np.ndarray:
+        X = np.atleast_2d(np.asarray(X, dtype=np.float64)); self._ensure(X.shape[1])
+        return X @ self.v
+    def delta(self, X, r, Xn, done) -> np.ndarray:
+        """delta = r + gamma*(1-done)*V(x') - V(x); a terminal transition never reads V(x')."""
+        r = np.asarray(r, dtype=np.float64); done = np.asarray(done, dtype=np.float64)
+        boot = np.where(done > 0, 0.0, self.V(Xn))
+        return r + self.gamma * boot - self.V(X)
+    def update(self, X, r, Xn, done, alpha: float) -> np.ndarray:
+        """TD(0): v += alpha * mean_i delta_i x_i (delta from the pre-step v). Returns delta and
+        folds it into the running scale."""
+        X = np.atleast_2d(np.asarray(X, dtype=np.float64))
+        d = self.delta(X, r, Xn, done)
+        self.v += alpha * (d @ X) / X.shape[0]
+        self.m = self.beta * self.m + (1.0 - self.beta) * float(np.mean(d * d)); self.n += 1
+        return d
+    def scale(self) -> float:
+        if self.n == 0: return 1.0
+        return max(float(np.sqrt(self.m / (1.0 - self.beta ** self.n))), self.floor)
+    def state(self):
+        return (None if self.v is None else self.v.copy(), self.m, self.n)
+    def restore(self, st):
+        v, self.m, self.n = st; self.v = None if v is None else v.copy()
+
+
+def q_targets(brain, r, Xn, done, gamma: float) -> np.ndarray:
+    """y = r + gamma*(1-done)*max_a' Q(x', a'), Q = -F. A terminal transition's target is r."""
+    r = np.asarray(r, dtype=np.float64); done = np.asarray(done, dtype=np.float64)
+    boot = np.where(done > 0, 0.0, brain.Q(np.atleast_2d(Xn)).max(axis=1))
+    return r + gamma * boot
+
+
 class Cache:
-    """The day's episodes: what was sensed, what was done, what the body said."""
+    """The day's episodes: what was sensed, what was done, what the body said.
+    Each closed day also holds its transitions (x, a, r, logp, x_next, done): x_next is the next
+    waking tick's sensation, and the last tick of a day has done=True (no bootstrap across the
+    night; its x_next is a placeholder copy of x and is never read)."""
     def __init__(self):
         self.days: list[tuple[np.ndarray, np.ndarray, np.ndarray]] = []   # (X, a, R) per day
         self.X, self.a, self.r, self.lp = [], [], [], []
@@ -92,7 +150,10 @@ class Cache:
             R[:] = 0.0
         else:                          # advantage normalisation: the body's lessons are O(0.01),
             R /= max(sd, 1e-3)         # the policy needs O(1) energy gaps; scale-free updates
-        self.days.append((np.array(self.X), np.array(self.a), R, np.array(self.lp, dtype=np.float64)))
+        X = np.array(self.X)
+        Xn = np.concatenate([X[1:], X[-1:]])
+        done = np.zeros(len(r)); done[-1] = 1.0
+        self.days.append((X, np.array(self.a), R, np.array(self.lp, dtype=np.float64), r, Xn, done))
         self.days = self.days[-keep_days:]
         self.X, self.a, self.r, self.lp = [], [], [], []
         # "surprise" for the growth trigger: how spiky the day's raw lessons were (std of r, in
@@ -101,6 +162,10 @@ class Cache:
     def batch_source(self, today_only: bool):
         days = self.days[-1:] if today_only else self.days
         return tuple(np.concatenate([d[i] for d in days]) for i in range(4))
+    def transitions(self, today_only: bool):
+        """(X, a, r, logp, X_next, done) over the cached days, for the TD learners."""
+        days = self.days[-1:] if today_only else self.days
+        return tuple(np.concatenate([d[i] for d in days]) for i in (0, 1, 4, 3, 5, 6))
 
 
 class Life:
@@ -112,7 +177,21 @@ class Life:
         self.senses = Senses(cfg.sense)
         self.y = cfg.world.H / 2; self.x = cfg.world.W / 2
         self.heading = float(self.rng.uniform(0, 2 * np.pi))
-        self.brain = Brain(cfg.brain, self.rng) if cfg.policy == "ebm" else None
+        if cfg.learner not in ("pg", "ac", "q"):
+            raise ValueError(f"unknown learner {cfg.learner!r}")
+        bcfg = cfg.brain
+        if cfg.policy == "ebm" and cfg.learner == "q":
+            # Q mode acts epsilon-greedy on Q = -F (contract). The act_mode field belongs to the
+            # senses+acting builder; until it exists on BrainConfig, set it on a copy (Brain.act
+            # reads it with getattr). The caller's config object is never mutated.
+            if "act_mode" in {f.name for f in fields(bcfg)}:
+                bcfg = replace(bcfg, act_mode="egreedy")
+            else:
+                bcfg = replace(bcfg); bcfg.act_mode = "egreedy"
+        self.brain = Brain(bcfg, self.rng) if cfg.policy == "ebm" else None
+        self.critic = Critic(cfg.gamma, cfg.scale_decay) if (self.brain and cfg.learner == "ac") else None
+        self._pending = None               # "ac"/"q" online: (x, a, r, logp) awaiting its x_next
+        self._td_day = []                  # online |TD error| this day (instrument)
         self.policy = None if self.brain else baselines.make(cfg.policy, self.rng)
         self.cache = Cache()
         self.trace = None
@@ -147,6 +226,8 @@ class Life:
     def wake_tick(self):
         sens = self.senses.sense(self.world, self.y, self.x, self.heading, self.body.state(), self.rng)
         x = sens["x"]
+        if self._pending is not None:      # the previous tick's transition now has its x_next
+            self.online_learn(*self._pending, x_next=x, done=False); self._pending = None
         if self.brain:
             a, Fx, logp = self.brain.act(x, self.rng)
         else:
@@ -156,7 +237,10 @@ class Life:
         r = self.body.tick(True, self.n_units(), food, poison)
         self.cache.push(x, a, r, logp)
         if self.brain and self.cfg.day_learning:
-            self.online_learn(x, a, r)
+            if self.cfg.learner == "pg":
+                self.online_learn(x, a, r, logp)
+            else:
+                self._pending = (x, a, r, logp)
         if self.policy is not None:
             sens2 = {"left": sens["left"], "right": sens["right"], "body": self.body.state()}
             self.policy.learn_tick(sens2, r)
@@ -182,8 +266,15 @@ class Life:
             self._snaps.append(self.world.fields.astype(np.float16)); self._snap_t.append(self.t)
         self.t += 1
 
-    def online_learn(self, x, a, r):
-        """REINFORCE with an eligibility trace: same credit as the night rule, applied each tick."""
+    def online_learn(self, x, a, r, logp, x_next=None, done=False):
+        """One online update. "pg": REINFORCE with an eligibility trace, applied at the tick itself
+        (x_next/done unused). "ac"/"q": applied one tick late, once x_next is known (or at day's end
+        with done=True). logp (behaviour log-prob) is accepted for the IS-weighting merge; the
+        learners here do not use it online (the "ac" arm acts by softmax, so the ratio is ~1)."""
+        if self.cfg.learner == "ac":
+            return self._online_ac(x, a, r, x_next, done)
+        if self.cfg.learner == "q":
+            return self._online_q(x, a, r, x_next, done)
         g = self.brain.grad_logpi(x[None, :], np.array([a]))
         if self.trace is None:
             self.trace = {k: np.zeros_like(self.brain.theta[k]) for k in self.brain.theta}
@@ -193,6 +284,37 @@ class Life:
         for k in self.brain.theta:
             self.brain.theta[k] += self.cfg.day_lr * (r - self.rbar) * self.trace[k]
 
+    def _online_ac(self, x, a, r, x_next, done):
+        """Actor-critic(lambda), Sutton & Barto 2018 sec 13.5: critic TD(0); actor trace decays at
+        gamma*lam (the textbook AC(lambda) trace; with a TD-error lesson a decay above gamma would
+        over-count credit). Lesson = delta / running scale. The trace is cleared at a terminal
+        transition (end of day) and on growth."""
+        xn = x if x_next is None else x_next
+        d = self.critic.update(x[None, :], [r], xn[None, :], [float(done)], self.cfg.alpha_v)[0]
+        self._td_day.append(abs(float(d)))
+        lesson = d / self.critic.scale()
+        g = self.brain.grad_logpi(x[None, :], np.array([a]))
+        if self.trace is None:
+            self.trace = {k: np.zeros_like(self.brain.theta[k]) for k in self.brain.theta}
+        decay = self.cfg.gamma * self.cfg.lam
+        for k in self.trace:
+            self.trace[k] = decay * self.trace[k] + g[k][0]
+        for k in self.brain.theta:
+            self.brain.theta[k] += self.cfg.day_lr * lesson * self.trace[k]
+        if done:
+            self.trace = None
+
+    def _online_q(self, x, a, r, x_next, done):
+        """Online Q-learning on Q = -F: y = r + gamma*(1-done)*max Q(x'), one semi-gradient step."""
+        xn = x if x_next is None else x_next
+        y = q_targets(self.brain, [r], xn[None, :], [float(done)], self.cfg.gamma)
+        self._td_day.append(self.brain.learn_q(x[None, :], np.array([a]), y, self.cfg.alpha_q))
+
+    def _flush_pending(self):
+        """End of the waking day: the last transition is terminal (no bootstrap over the night)."""
+        if self._pending is not None:
+            self.online_learn(*self._pending, x_next=None, done=True); self._pending = None
+
     # ---- night -----------------------------------------------------------------------------
     def sleep(self, surprise: float):
         c = self.cfg
@@ -201,7 +323,9 @@ class Life:
             if c.sleep == "noise":
                 # perturb by the same norm a replay night would have moved the weights
                 before = self.brain.snapshot()
+                cst = self.critic.state() if self.critic else None
                 self._replay(today_only=False)
+                if self.critic: self.critic.restore(cst)
                 norm = np.sqrt(sum(((self.brain.theta[k] - before[k]) ** 2).sum() for k in before))
                 self.brain.theta = before
                 for k in self.brain.theta:
@@ -236,6 +360,8 @@ class Life:
     def _replay(self, today_only: bool):
         """Interleaved replay: every cached day shuffled together, importance-corrected."""
         c = self.cfg
+        if c.learner != "pg":
+            return self._replay_td(today_only)
         X, a, R, lp = self.cache.batch_source(today_only)
         n = len(a); clipped = []
         for _ in range(c.sleep_epochs):
@@ -247,6 +373,34 @@ class Life:
                       "entropy": round(self.brain.entropy(X), 4),
                       "w_norm": round(float(np.sqrt(sum((self.brain.theta[k] ** 2).sum() for k in ("w", "u", "v")))), 4)}
 
+    def _replay_td(self, today_only: bool):
+        """Night replay for "ac" and "q": cached transitions, all days shuffled together, same
+        epochs/batch as "pg". "ac": per minibatch, delta from the CURRENT critic, critic TD(0) step
+        (batch mean, step alpha_v), actor step on delta/scale, IS-clipped as in "pg".
+        "q": per minibatch, targets from the current Q, one learn_q step (batch mean, step alpha_q),
+        no IS weighting (Q-learning is off-policy)."""
+        c = self.cfg
+        X, a, r, lp, Xn, done = self.cache.transitions(today_only)
+        n = len(a); clipped = []; tds = []
+        for _ in range(c.sleep_epochs):
+            order = self.rng.permutation(n)
+            for i in range(0, n, c.batch):
+                idx = order[i:i + c.batch]
+                if c.learner == "ac":
+                    d = self.critic.update(X[idx], r[idx], Xn[idx], done[idx], c.alpha_v)
+                    tds.append(float(np.abs(d).mean()))
+                    clipped.append(self.brain.learn(X[idx], a[idx], d / self.critic.scale(),
+                                                    logp_old=lp[idx], clip=c.clip))
+                else:
+                    y = q_targets(self.brain, r[idx], Xn[idx], done[idx], c.gamma)
+                    tds.append(self.brain.learn_q(X[idx], a[idx], y, c.alpha_q))
+        self.instr = {"clip_frac": round(float(np.mean(clipped)), 4) if clipped else None,
+                      "entropy": round(self.brain.entropy(X), 4),
+                      "w_norm": round(float(np.sqrt(sum((self.brain.theta[k] ** 2).sum() for k in ("w", "u", "v")))), 4),
+                      "td_abs": round(float(np.mean(tds)), 6),
+                      "td_abs_day": round(float(np.mean(self._td_day)), 6) if self._td_day else None}
+        self._td_day = []
+
     # ---- the life --------------------------------------------------------------------------
     def run(self) -> dict:
         c = self.cfg
@@ -256,6 +410,7 @@ class Life:
                 self.wake_tick()
                 if not self.body.alive: break
             if not self.body.alive: break
+            self._flush_pending()
             surprise = self.cache.close_day(c.lam, c.cache_days)
             self.sleep(surprise)
             if not self.body.alive: break
