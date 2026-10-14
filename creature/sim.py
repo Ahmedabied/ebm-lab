@@ -4,7 +4,7 @@ One creature, one world, one RNG. Everything the creature does passes through he
 everything that happens is written to runs/<label>/<seed>/ so the viewer and the metrics read
 the same record. Logging never draws from the RNG.
 """
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field, asdict, replace
 import hashlib, json, os, time
 import numpy as np
 from .world import World, WorldConfig
@@ -112,7 +112,10 @@ class Life:
         self.senses = Senses(cfg.sense)
         self.y = cfg.world.H / 2; self.x = cfg.world.W / 2
         self.heading = float(self.rng.uniform(0, 2 * np.pi))
-        self.brain = Brain(cfg.brain, self.rng) if cfg.policy == "ebm" else None
+        # the brain's input width follows the sense organ (12, or 15 with sign features);
+        # cfg.brain is not mutated
+        self.brain = (Brain(replace(cfg.brain, dim=self.senses.dim), self.rng)
+                      if cfg.policy == "ebm" else None)
         self.policy = None if self.brain else baselines.make(cfg.policy, self.rng)
         self.cache = Cache()
         self.trace = None
@@ -156,7 +159,7 @@ class Life:
         r = self.body.tick(True, self.n_units(), food, poison)
         self.cache.push(x, a, r, logp)
         if self.brain and self.cfg.day_learning:
-            self.online_learn(x, a, r)
+            self.online_learn(x, a, r, logp)
         if self.policy is not None:
             sens2 = {"left": sens["left"], "right": sens["right"], "body": self.body.state()}
             self.policy.learn_tick(sens2, r)
@@ -182,13 +185,21 @@ class Life:
             self._snaps.append(self.world.fields.astype(np.float16)); self._snap_t.append(self.t)
         self.t += 1
 
-    def online_learn(self, x, a, r):
-        """REINFORCE with an eligibility trace: same credit as the night rule, applied each tick."""
-        g = self.brain.grad_logpi(x[None, :], np.array([a]))
+    def online_learn(self, x, a, r, logp_behaviour):
+        """REINFORCE with an eligibility trace: same credit as the night rule, applied each tick.
+        Each tick's gradient enters the trace weighted by the clipped importance ratio
+        ρ = clip(π_T(a|x)/β(a|x), 1±clip), β being the behaviour policy that chose a (its log-prob
+        comes from Brain.act). Softmax acting: β = π_T with the same theta, so ρ == 1.0 exactly and
+        this is the EXP-01 rule bit-for-bit. Egreedy acting: an (approximately, clipped) corrected
+        policy gradient for π_T."""
+        A1 = np.array([a])
+        g = self.brain.grad_logpi(x[None, :], A1)
+        rho = float(np.exp(self.brain.logp(x[None, :], A1)[0] - logp_behaviour))
+        rho = min(max(rho, 1.0 - self.cfg.clip), 1.0 + self.cfg.clip)
         if self.trace is None:
             self.trace = {k: np.zeros_like(self.brain.theta[k]) for k in self.brain.theta}
         for k in self.trace:
-            self.trace[k] = self.cfg.lam * self.trace[k] + g[k][0]
+            self.trace[k] = self.cfg.lam * self.trace[k] + rho * g[k][0]
         self.rbar = 0.99 * self.rbar + 0.01 * r
         for k in self.brain.theta:
             self.brain.theta[k] += self.cfg.day_lr * (r - self.rbar) * self.trace[k]
