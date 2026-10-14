@@ -128,3 +128,46 @@ Every number spoken or shown is read from a lab file by the scene code (no retyp
 `research/07` and `DESIGN.md` before recording (the referees' corrections apply to the lesson too:
 no "gravity well", no "beats tabular Q", no "3 numbers"). One hostile-referee pass on the script for
 mathematical honesty before any audio is spent.
+
+## Ahmed's answer and teaching spec (2026-10-15, verbatim; this overrides "warmth" above)
+> B but eleven labs is also acessable trugh my cloudflare account trugh cf workers ai that can be used
+> also i dont need warmth i need coherance i need to be taught in a way that makes me see the pattern and
+> connections the system in every single block [why are we using a sum in the sunction because we need
+> to know the total of abc and then an example in real life, why are we doing squear root and so on,
+> reverse engneer the math for me] teach me things back and fourth from the ground up and then strip it
+> back down to the core of it i really cant explain how i learn well but i thing you got me and i think
+> you get why no teacher ever worked with me and i had to actually fiddle with things to learn
+
+**Decision: option B** (Eleven v4 for ~11 min; a free local voice for the rest; voice chosen for
+coherence and clarity, not warmth: Bella or Alice over Jessica; make the local-voice sample and let
+him pick). **Lead to verify, never assume:** he says ElevenLabs is reachable through his Cloudflare
+account via Workers AI. Check his CF account (AI Gateway / Workers AI TTS models) before spending the
+10k; if it only proxies ElevenLabs with the same key it adds nothing; if it carries its own TTS quota or
+model, use it. Do not create or change anything in his Cloudflare account without asking.
+
+**The teaching method (the actual deliverable; every block of the lesson follows this shape):**
+1. **Start from the need.** State the question the block answers in one sentence ("the brain needs
+   one number that says how much this move fits what it smells").
+2. **Reverse-engineer the operation.** For every symbol and operation: *why this one and not another*
+   (why a sum: we need the total of the three notes' votes; why a square: a deviation of 2 should hurt
+   more than twice a deviation of 1 and the sign must not matter; why a log: the nose must hear a
+   whisper and a shout; why e: its slope is itself, so "lower energy wins by a constant factor"; why
+   divide by T: a dial that makes differences matter more or less; why max over next actions: the
+   promise assumes you will keep choosing well). Show the alternative and watch it fail.
+3. **One real-life example per operation**, then the same operation on the creature's actual numbers
+   (read from the lab files), side by side.
+4. **Connections.** After each block, draw the line to the block before and the block after: where this
+   number goes next, what feeds it. The whole system diagram grows one box at a time and is shown
+   again at the end of every chapter (the "pattern and connections in every block").
+5. **Build up, then strip down.** Each chapter ends by collapsing the block back to its core in one
+   line ("softmax = divide each ticket by the total of all tickets") and then to the one sentence of
+   the chapter.
+6. **Fiddle.** He learns by touching the thing. So: (a) in the video, "pause and predict" beats before
+   every reveal (what happens to the three bars if T goes up?), then the answer; (b) a companion
+   **playground** the video points at: a single-file HTML page (same no-popup rules; served from the
+   repo like the viewer) with sliders for T, the weights, γ, ε, and live bars/landscape so he can move
+   the knobs himself, using the same formulas as `creature/brain.py` (and a tiny Python version
+   `video/playground.py` for the terminal). The playground is part of the deliverable, not an extra.
+7. **Coherence over everything.** No metaphor is used unless it maps exactly; if a metaphor breaks,
+   say where it breaks. No "trust me". Every claim about the experiment comes from `findings/02` /
+   `research/07` with the referees' corrections applied.
