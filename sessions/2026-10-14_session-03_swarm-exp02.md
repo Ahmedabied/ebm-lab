@@ -44,3 +44,10 @@ sign 96%), M3 resting bias (0.53 vs 0.014; r = −0.49 with survival). Literatur
   shared across arms whose stability differs (the `ebm-all` lesson).
 - Cost: ~16 Opus agent runs + the orchestrator. Heavy, as Ahmed asked; next sessions should be one
   lever, one experiment, two referees.
+
+
+## Locked for the next session (2026-10-15): the teaching video
+Ahmed asked for a YouTube lesson (Manim + ElevenLabs v4 soft female voice) teaching the concepts with
+real-life analogies, the math from the beginning, the EBM and its training rule symbol by symbol, the
+experiment step by step, and the code, with many moving visualisations: "be the teacher i never could
+find". The verbatim prompt (key redacted), facts, syllabus and pipeline: `video/BRIEF.md`.

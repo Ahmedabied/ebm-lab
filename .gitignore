@@ -5,3 +5,9 @@ runs/**/ticks.jsonl
 runs/**/events.jsonl
 runs/**/fields.npz
 runs/**/brain.npz
+
+# secrets for the teaching video (never commit)
+video/.env
+video/out/
+video/media/
+video/audio/

@@ -1,0 +1,6 @@
+[project]
+name = "ebm-lab-video"
+version = "0.1.0"
+description = "The teaching video for the EBM lab (ManimCE + ElevenLabs). Separate env from the lab."
+requires-python = ">=3.12"
+dependencies = ["manim>=0.19", "numpy", "requests", "soundfile", "mutagen"]

@@ -53,3 +53,10 @@ found by a number that looked wrong, never by reading code.
 
 **Token cost:** heavy (≈ 10 agent runs ≈ 1.6M agent tokens + a long main thread). Next sessions: one lever,
 one pre-registered experiment, no new research seats unless a question needs one.
+
+
+## Locked for the next session (2026-10-15): the teaching video
+Ahmed asked for a YouTube lesson (Manim + ElevenLabs v4 soft female voice) teaching the concepts with
+real-life analogies, the math from the beginning, the EBM and its training rule symbol by symbol, the
+experiment step by step, and the code, with many moving visualisations: "be the teacher i never could
+find". The verbatim prompt (key redacted), facts, syllabus and pipeline: `video/BRIEF.md`.

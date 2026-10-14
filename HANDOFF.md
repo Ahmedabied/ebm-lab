@@ -1,5 +1,12 @@
 # HANDOFF — read this first next session
 
+## NEXT TASK (locked 2026-10-15): the teaching video
+Ahmed's verbatim brief, the facts (ElevenLabs free tier = 10k chars ≈ 11 min; `eleven_v4` exists;
+ManimCE 0.22 in `video/.venv`; TinyTeX in `~/.TinyTeX`), the syllabus and the pipeline are in
+**`video/BRIEF.md`**. First action after compaction: verify a `MathTex` render, then ask Ahmed the one
+voice-budget question in the brief (A/B/C) with the sample path, then build. The key is in `video/.env`
+(gitignored); never write it into a document.
+
 ## Where it stands (one paragraph)
 EXP-02 gave the lab its first positive within-life learning result: the EBM trained as a value
 function (`ebm-td`) forages by smell and reaches tabular Q's level (`findings/02`). The decomposition
