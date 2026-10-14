@@ -105,8 +105,8 @@ seeds, metrics and predictions above are unchanged.
    could have the wrong sign. Softmax acting is unchanged bit for bit (68 tests).
 3. **Step sizes from pilot seeds 20–27 (linear, 15 days):** alpha_q = 0.1 (grid {0.003…0.3},
    interior, 953 ticks); alpha_v: 0.3 was the top edge of {0.01…0.3} (2075 ticks, CI [1085, 3169]);
-   the grid is being extended upward ({1.0, 3.0}, then {10} at most) and the chosen value is written
-   in `SimConfig` with the full pilot table in `experiments/results/02a_pilot_alpha/`. The pilot
+   the grid was extended to {1.0, 3.0}: 0.3 stays the winner and is now interior (1.0 → 1616,
+   3.0 → 864 with a diverging critic), so **alpha_v = 0.3**, written in `SimConfig` with the full pilot table in `experiments/results/02a_pilot_alpha/`. The pilot
    also showed every q-mode value BELOW ebm-dn (1102) on those seeds, so P1 is at risk before the
    run; two referees are checking whether that is a bug or a fact. No prediction is changed.
 4. **Ceiling:** `ticks_alive` is censored at 15 × 350 = 5250. Tabular Q already hits it in 10 of
