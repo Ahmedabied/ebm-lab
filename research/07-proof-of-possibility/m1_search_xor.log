@@ -1,0 +1,7 @@
+xor gen   0 best  5250.0 mean  1729.4 sig 0.493 all-time  5250.0 (31s)
+xor gen   1 best  5250.0 mean  2224.2 sig 0.487 all-time  5250.0 (71s)
+xor gen   2 best  5250.0 mean  3108.9 sig 0.482 all-time  5250.0 (127s)
+xor gen   3 best  5250.0 mean  3306.3 sig 0.476 all-time  5250.0 (188s)
+xor gen   4 best  5250.0 mean  3806.7 sig 0.474 all-time  5250.0 (259s)
+xor gen   5 best  5250.0 mean  4309.8 sig 0.468 all-time  5250.0 (339s)
+xor gen   6 best  5250.0 mean  3439.3 sig 0.463 all-time  5250.0 (401s)

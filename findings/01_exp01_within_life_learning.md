@@ -77,3 +77,16 @@ and TD bootstrapping; Braitenberg is told the answer.
    reaches more nights before the world judges it. All arms would get it.
 4. **Match the Q learner's advantages honestly:** give the EBM TD bootstrapping (that is the critic), and
    test whether the hand-built sign features are what makes Q win (an `ebm-signfeatures` arm).
+
+## CORRECTION (2026-10-14, session 03; the original text above is left as written)
+The single-life inspection quoted above (seed 3, "right sign, too weak to act on, entropy 0.97 of
+1.10") was made BEFORE the final defaults (A13: T 0.3, lr 1.0, clip 1.0). Under the defaults actually
+used in EXP-01, one night of replay **collapses** the policy: end-of-night entropy on proof seeds
+300–303 was 0.028, 0.092, 0.004, 0.139 (max 1.099), and the resting turning bias
+|π(LEFT|x0) − π(RIGHT|x0)| at a featureless sensation jumps from 0.014 (no learning) to 0.53 after the
+first night (`research/07-proof-of-possibility/m3_bias.py`, seeds 300–319). So the mechanism in
+EXP-01 is not "too weak to act on" but "too confident after one night, then unable to unlearn"
+(softmax saturation; Mei et al. 2020's gravity well). The data-starvation reading is also wrong as
+stated: the batch gradient on the key weight has block-means SNR ≈ 1.9 per day with the right sign on
+96% of creature-days (`m2_snr.py`). The signal is there; the step is far too large and it lands on
+~100 noisy directions at once. Full argument: `research/07-proof-of-possibility.md`.
