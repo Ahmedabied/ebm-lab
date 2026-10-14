@@ -14,7 +14,7 @@ R = os.path.join(os.path.dirname(os.path.abspath(__file__)), "results")
 WORLDS = ("linear", "xor")
 # Prereg arms-table order.
 ARMS = ["random", "tabular_q", "ebm-nolearn", "ebm", "ebm-dn", "ebm-dn-sign", "ebm-dn-greedy",
-        "ebm-dn-critic", "ebm-td", "ebm-all"]
+        "ebm-dn-critic", "ebm-td", "ebm-all", "tabular_q_next"]   # last = exploratory (A17)
 DECOMP = ["ebm-dn-sign", "ebm-dn-greedy", "ebm-dn-critic", "ebm-td", "ebm-all"]
 # Prereg contrasts, as a:b meaning ΔG = G(a) - G(b): P2 (greedy > sign > critic), P5 (td >= greedy).
 CONTRASTS = "ebm-dn-greedy:ebm-dn-sign,ebm-dn-sign:ebm-dn-critic,ebm-td:ebm-dn-greedy"
@@ -158,6 +158,27 @@ def main(argv=None):
     print("|---|" + "---|" * len(ws))
     for a in gap_arms:
         print(f"| {a} | " + " | ".join(fmt_gap(gaps[w].get(a)) for w in ws) + " |")
+
+    # ---- exploratory: G against the textbook Q target, and paired differences (referee, session 03) --
+    if all("tabular_q_next" in r["lives"] for r in worlds.values()):
+        a2 = argparse.Namespace(**{**vars(args), "target": "tabular_q_next"})
+        gaps2 = gap_rows(worlds, a2)
+        print(f"\n### Exploratory: G against the textbook target tabular_q_next (addendum item 10)\n")
+        for w in ws:
+            g0 = next(iter(gaps2[w].values()), None)
+            if g0: print(f"Denominator tabular_q_next - {args.base} ({w}): {fmt(g0['den'])}")
+        print("\n| arm | " + " | ".join(ws) + " |")
+        print("|---|" + "---|" * len(ws))
+        for a in gap_arms:
+            print(f"| {a} | " + " | ".join(fmt_gap(gaps2[w].get(a)) for w in ws) + " |")
+    print("\n### Paired differences in ticks_alive (arm_a - arm_b, paired bootstrap; the honest companion to G near the ceiling)\n")
+    pairs = [("ebm-td", "tabular_q"), ("ebm-td", "tabular_q_next"), ("ebm-all", "ebm-td"),
+             ("ebm-dn-sign", "ebm-dn"), ("ebm-dn-critic", "ebm-dn-greedy"), ("tabular_q_next", "tabular_q")]
+    print("| a - b | " + " | ".join(ws) + " |")
+    print("|---|" + "---|" * len(ws))
+    for a, b in pairs:
+        cells = [fmt(diff(worlds[w], a, b, "ticks_alive", n_boot=args.n_boot)) if has(worlds[w], a, b) else "n/a" for w in ws]
+        print(f"| {a} - {b} | " + " | ".join(cells) + " |")
 
     # ---- confirmatory tests (linear world unless stated) --------------------------------------------
     print("\n## Confirmatory tests P1-P5 (prereg; linear world unless stated)\n")
