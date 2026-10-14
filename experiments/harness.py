@@ -10,33 +10,58 @@ Usage from an experiment script:
 import json, os, sys, time, dataclasses
 import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from creature.sim import Life, SimConfig, source_hash, git_commit
+from creature.sim import Life, SimConfig, source_hash, git_commit, _cfg_dict
 
 RESULTS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "results")
 METRICS = ("ticks_alive", "days", "food", "poison", "mean_drive", "poison_bites_after_first")
+# Seeds already looked at while tuning (EXP-00/01 pilots 0-7, EXP-02 alpha pilot 20-27, EXP-01 main
+# 100-119) and the proof seeds of research/07 (300-339). A confirmatory run on any of them would not
+# be a fresh test, so run_arms refuses them unless the experiment name marks it as a pilot.
+BURNED = set(range(0, 8)) | set(range(20, 28)) | set(range(100, 120))
+PROOF = set(range(300, 340))
+PILOT_PREFIXES = ("00", "01", "02a")
 
 
 def _apply(cfg, overrides: dict):
-    """Overrides use dotted keys: {"policy": "ebm", "world.blend_mode": "xor", "brain.H0": 8}."""
+    """Overrides use dotted keys: {"policy": "ebm", "world.blend_mode": "xor", "brain.H0": 8}.
+    A key whose final attribute is not a dataclass field of its target raises KeyError(k): a typo
+    ("brain.act_mod") would otherwise silently add a dead attribute and run the default arm."""
     for k, v in overrides.items():
         obj = cfg; parts = k.split(".")
-        for p in parts[:-1]: obj = getattr(obj, p)
+        for p in parts[:-1]:
+            if not dataclasses.is_dataclass(obj) or p not in {f.name for f in dataclasses.fields(obj)}:
+                raise KeyError(k)
+            obj = getattr(obj, p)
+        if not dataclasses.is_dataclass(obj) or parts[-1] not in {f.name for f in dataclasses.fields(obj)}:
+            raise KeyError(k)
         setattr(obj, parts[-1], v)
     return cfg
 
 
+def check_seeds(name: str, seeds):
+    """Raise ValueError if a non-pilot experiment uses burned (tuning) or proof seeds."""
+    if name.startswith(PILOT_PREFIXES): return
+    bad = sorted(set(int(s) for s in seeds) & (BURNED | PROOF))
+    if bad:
+        raise ValueError(f"{name!r} uses burned/proof seeds {bad}; only pilots ({', '.join(PILOT_PREFIXES)}*) may")
+
+
 def run_arms(name: str, arms: dict, seeds, days: int, runs_dir: str = "/tmp/ebm-runs",
              day_len: int = 300, world_overrides: dict | None = None, quiet=False) -> dict:
+    seeds = list(seeds)
+    check_seeds(name, seeds)
     out_dir = os.path.join(RESULTS, name); os.makedirs(out_dir, exist_ok=True)
     t0 = time.time()
     res = {"name": name, "command": " ".join(sys.argv), "commit": git_commit(),
            "source_hash": source_hash(), "seeds": list(seeds), "days": days, "day_len": day_len,
-           "arms": {}, "lives": {}}
+           "arms": {}, "configs": {}, "lives": {}}
     for arm, ov in arms.items():
         res["arms"][arm] = ov; res["lives"][arm] = []
         for s in seeds:
             cfg = SimConfig(seed=int(s), label=f"{name}_{arm}", days=days, day_len=day_len, runs_dir=runs_dir)
             _apply(cfg, {**(world_overrides or {}), **ov})
+            if arm not in res["configs"]:     # full effective SimConfig (first seed), not just the overrides
+                res["configs"][arm] = _cfg_dict(cfg)
             summ = Life(cfg).run(); summ["seed"] = int(s)
             res["lives"][arm].append(summ)
         if not quiet:

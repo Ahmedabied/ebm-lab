@@ -1,8 +1,8 @@
 """EXP-02 — the pre-registered decomposition (experiments/EXP-02-prereg.md). Fresh seeds 200-219.
 Which of tabular Q's four advantages (sign features, egreedy argmax, TD bootstrap, online learning)
 explains its 3x lead over the EBM in EXP-01?
-Run: uv run python experiments/02_main.py linear ; uv run python experiments/02_main.py xor
-Then: uv run python experiments/report_exp02.py ; uv run python experiments/plot_exp02.py"""
+Run: .venv/bin/python experiments/02_main.py linear ; .venv/bin/python experiments/02_main.py xor
+Then: .venv/bin/python experiments/report_exp02.py ; .venv/bin/python experiments/plot_exp02.py"""
 import sys
 from harness import run_arms, table
 
