@@ -13,6 +13,12 @@ uv run python -m creature.export runs/<label>/<seed>
 - Prints the size, how many field snapshots were kept, and the `stride`.
 - Budget is 5 MB by default (`--budget-mb N` to change it).
 - A 20-day run at default config comes out at about 2.0-2.5 MB, so nothing gets dropped.
+- Input names come from the run's own `meta.json` (`config.input_names`, written from
+  `Senses.names()`: 12 dims, or 15 with sign features). Only if a run's meta.json predates
+  that field does the exporter fall back to the legacy 12 names (and only when u is 12 wide);
+  `run.json["input_names_source"]` says which (`meta`, `fallback-legacy-12`, `absent`).
+- `run.json["meta"]` also carries the EFFECTIVE `brain_dim`, `act_mode` and `learner`
+  (null for baselines), read from meta.json's `config.brain` / `config.learner`.
 - If a run would go over the budget, the exporter keeps every k-th field snapshot
   (time downsampling only, never spatial). The header and the world panel then say
   "downsampled".
@@ -80,18 +86,24 @@ http://localhost:8765/viewer/?run=runs/smoke/1/run.json
 - **Action energies F(x, a)** for LEFT, RIGHT and FORWARD this tick.
   - Green = lowest energy, so the most probable action.
   - `pi` = softmax(-F/T), recomputed in the page from the logged F and the config's T.
-  - "chosen" marks the action actually taken. It is **sampled** from pi, so it is not always the lowest.
+  - "chosen" marks the action actually taken. Under `act_mode = softmax` it is **sampled** from pi.
+    Under `act_mode = egreedy` (and every `learner = q` run) it is argmin F with prob 1-eps, else uniform;
+    pi is then shown for reference only, and the page says so. Either way it is not always the lowest.
   - Bar axis: "this tick's range" (default) or "whole-life range". The numbers under the bars give the axis ends.
 - **Hidden units H over life**: step plot, with nights shaded.
-- **u matrix per night** (hidden units x 12 inputs), one small tile per night from `brain.npz`.
+- **u matrix per night** (hidden units x inputs), one small tile per night from `brain.npz`.
+  - Width = `u[0].length` (12, or 15 with sign features); the canvas is sized from it.
   - Blue = negative, orange = positive.
   - One symmetric colour scale shared by all nights. The panel says what its max |u| is.
   - Click a tile to jump to that night. The current night is outlined and drawn large.
   - Hover the large one to read single values.
-  - Inputs: L.A..L.C = left antenna, R.A..R.C = right antenna, dA..dC = change of the mean,
-    E/X = body, bias.
-- **Per-night table**: night, day, end tick, H, plus whatever the sleep events logged
-  (surprise from `sleep_start`; clip_frac, entropy, w_norm from `sleep_end`).
+  - Column labels = `run.json["input_names"]`. If those are missing or not as wide as u,
+    columns are labelled `x0, x1, ...` (never "undefined") and the panel says so.
+    Current layout: `contrast_A..C`, `mean_A..C`, `change_A..C`, `body_E`, `body_X`,
+    [`sign_A..C`], `bias`.
+- **Per-night table**: night, day, end tick, H, plus whatever the sleep events logged,
+  copied as-is: `surprise`, `wake_entropy` from `sleep_start`; `clip_frac`, `entropy`, `w_norm`,
+  `td_abs`, `td_abs_day` from `sleep_end` (`td_*` only for `learner = ac / q`).
   - Columns a run did not log are hidden.
   - Click a row to jump to that night.
 
@@ -129,6 +141,10 @@ The legend under the world is built from the blend table that the exporter copie
   - A creature that dies before its first night has no `brain.npz` at all.
   - At the default config on 2026-10-13, the EBM died on day 0 for every seed tried (1-40),
     so default EBM runs show F bars but no u heatmaps.
+- **Older run.json files keep their old labels.** Files exported before 2026-10-14 carry the legacy
+  names `L.A..R.C`, which describe the creature-v0 raw left/right layout, not the opponent-coded
+  layout (contrast/mean) that EXP-01 runs actually used. Re-export a run to get its true names
+  (needs a meta.json with `config.input_names`; EXP-01 metas predate it, so they still fall back).
 - **Only u is drawn.** v, c, w and b are in `run.json` (`brain[i]`) but not shown.
 - **Night tiles are matched to `sleep_end` events by order.** That matches how `sim.py`
   writes them today. If that ordering ever changes, the tile labels would be wrong.
@@ -155,3 +171,16 @@ The legend under the world is built from the blend table that the exporter copie
   summary and blend mode rendered as plain text and ran nothing. A remote image URL in
   `fields.png` was refused.
 - Screenshot: `viewer/_smoke.png` (smoke run at t=300).
+
+### Re-verified 2026-10-14 (exp02/export2)
+
+- Lives: `python -m creature.run --policy ebm --label exp02-smoke/ebm-all --seed 20 --days 5
+  --day-learning --learner q --act-mode egreedy --sign-features`, and the same with
+  `--label exp02-smoke/ebm-dn` and only `--day-learning` (a default `ebm-dn` life). Then
+  `python -m creature.export runs/exp02-smoke/<arm>/20`. Both lives died on day 1 (one night each),
+  so each has one u tile; run.json is 0.20 / 0.18 MB.
+- Headless Chrome (`~/.local/bin/cdp` as a library, 1280 px viewport), seek to the end:
+  15 vs 12 labelled columns, td_abs/td_abs_day/wake_entropy shown for the q life, clip_frac for the
+  pg life, no "undefined" in the page text, no JS errors, no horizontal scroll.
+  The old `runs/exp01-xor/100` and `runs/exp01-linear/100-tabular_q` run.json files also render clean.
+- Screenshots: `runs/exp02-smoke/ebm-all/20/viewer.png`, `runs/exp02-smoke/ebm-dn/20/viewer.png`.

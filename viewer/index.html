@@ -304,6 +304,9 @@ function renderHeader() {
     chip("days x len", c.days + " x " + c.day_len + "+" + c.sleep_len), chip("blend", blendMode),
     chip("sense noise", noise), chip("sim seconds", m.seconds),
   ];
+  if (m.brain_dim !== undefined && m.brain_dim !== null) chips.push(chip("inputs", m.brain_dim));
+  if (m.learner) chips.push(chip("learner", m.learner));
+  if (m.act_mode) chips.push(chip("acting", m.act_mode + (m.act_mode === "egreedy" && c.brain && c.brain.eps !== undefined ? " eps " + c.brain.eps : "")));
   fill($("chips"), chips);
   renderLegend();
   const info = { export: { format: RUN.format, run_dir: RUN.run_dir, field_scale: RUN.fields.scale,
@@ -313,8 +316,9 @@ function renderHeader() {
   $("worldnote").textContent = `${H} x ${W} torus, y up` +
     (RUN.fields.stride > 1 ? ` | field shown every ${RUN.fields.stride * RUN.fields.snap_every} ticks (downsampled)` :
       ` | field snapshot every ${RUN.fields.snap_every} ticks`);
-  $("brainnote").textContent = T.F ? "energy-based policy: pi(a|x) = softmax(-F(x,a)/T), T = " + ((c.brain && c.brain.T) || 1)
-    : "policy '" + c.policy + "' logs no energies";
+  $("brainnote").textContent = !T.F ? "policy '" + c.policy + "' logs no energies"
+    : "energy-based policy: pi(a|x) = softmax(-F(x,a)/T), T = " + ((c.brain && c.brain.T) || 1) +
+      (m.act_mode === "egreedy" ? " | acting is eps-greedy: the chosen action is argmin F, or uniform w.p. eps (not sampled from pi)" : "");
 }
 
 // field legend: channel colours are fixed (A red, B green, C blue); which blend is food/poison
@@ -410,7 +414,13 @@ function buildHBg() {
 }
 
 // ---- u heatmaps -----------------------------------------------------------------------------
-let uAbsMax = 1, uStripRects = [];
+let uAbsMax = 1, uStripRects = [], UDIM = 0, UOX = 28, UOY = 26;
+const UCW = 18;
+// column label j: from run.json input_names when it matches u's width, else "x<j>" (never undefined)
+function inName(j) {
+  const n = RUN.input_names;
+  return (Array.isArray(n) && n.length === UDIM && typeof n[j] === "string") ? n[j] : "x" + j;
+}
 function divColor(v) {
   const s = Math.max(-1, Math.min(1, v / uAbsMax));
   const base = [26, 31, 43], neg = [70, 150, 255], pos = [255, 150, 60];
@@ -434,15 +444,24 @@ function buildUStrip() {
   const w = BRAIN.length * (tileW + gap) + gap, h = tileH + 16;
   usctx = setupCanvas(cv, w, h);
   uStripRects = BRAIN.map((n, k) => ({ x: gap + k * (tileW + gap), y: 2, w: tileW, h: n.H * ch, k, cw, ch, tileH }));
-  ubctx = setupCanvas($("ubig"), 12 * 18 + 30, Math.min(32, maxH) * 12 + 30);
-  $("uhead").textContent += ` Colour scale symmetric, |u| max over all nights = ${uAbsMax.toFixed(3)}.`;
+  UDIM = dim;
+  let maxLab = 1; for (let j = 0; j < dim; j++) maxLab = Math.max(maxLab, inName(j).length);
+  UOY = 10 + Math.ceil(maxLab * 5.6 * Math.sin(Math.PI / 3));   // room for the rotated labels
+  ubctx = setupCanvas($("ubig"), UOX + dim * UCW + 30, Math.min(32, maxH) * 12 + UOY + 4);
+  $("uhead").textContent += ` ${dim} inputs. Colour scale symmetric, |u| max over all nights = ${uAbsMax.toFixed(3)}.`;
+  const src = RUN.input_names_source;
+  if (!(Array.isArray(RUN.input_names) && RUN.input_names.length === dim))
+    $("uhead").textContent += " Input names missing or not matching u's width: columns are labelled x0, x1, ...";
+  else if (src && src !== "meta")
+    $("uhead").textContent += " Input names are the exporter's legacy fallback (this run's meta.json has none), so they may not match the run's sense layout.";
   buildNightTable();
 }
 // per-night instruments from the sleep_end / sleep_start events (absent in older runs -> "-")
 let nightRows = [];
 function buildNightTable() {
   const cols = [["night", "night"], ["day", "day"], ["t", "t end"], ["H", "H"], ["surprise", "surprise"],
-    ["clip_frac", "clip_frac"], ["entropy", "entropy"], ["w_norm", "w_norm"]];
+    ["wake_entropy", "wake_entropy"], ["clip_frac", "clip_frac"], ["entropy", "entropy"], ["w_norm", "w_norm"],
+    ["td_abs", "td_abs"], ["td_abs_day", "td_abs_day"]];
   const shown = cols.filter(([k]) => ["night", "day", "t", "H"].includes(k) || BRAIN.some((n) => n[k] !== undefined && n[k] !== null));
   nightRows = BRAIN.map((n, k) => {
     const tr = el("tr", null, shown.map(([key]) => el("td", { class: "mono" }, n[key] === undefined || n[key] === null ? "-" : n[key])));
@@ -479,13 +498,12 @@ function drawUBig(k) {
     fill($("uinfo"));
     return;
   }
-  const n = BRAIN[k], names = RUN.input_names || [], cw = 18, ch = Math.max(4, Math.min(12, Math.floor((h - 30) / n.H)));
-  const ox = 28, oy = 26;
+  const n = BRAIN[k], cw = UCW, ox = UOX, oy = UOY, ch = Math.max(4, Math.min(12, Math.floor((h - oy - 4) / n.H)));
   ubctx.font = "9px ui-monospace, monospace"; ubctx.fillStyle = C("--dim");
   ubctx.save();
   for (let j = 0; j < n.u[0].length; j++) {
     ubctx.save(); ubctx.translate(ox + j * cw + cw / 2 + 3, oy - 3); ubctx.rotate(-Math.PI / 3);
-    ubctx.fillText(names[j] || ("x" + j), 0, 0); ubctx.restore();
+    ubctx.fillText(inName(j), 0, 0); ubctx.restore();
   }
   ubctx.restore();
   for (let i = 0; i < n.H; i++) {
@@ -493,11 +511,11 @@ function drawUBig(k) {
     for (let j = 0; j < n.u[i].length; j++) { ubctx.fillStyle = divColor(n.u[i][j]); ubctx.fillRect(ox + j * cw, oy + i * ch, cw - 1, ch - 1); }
   }
   const br = () => el("br");
-  const instr = [["surprise", n.surprise], ["clip_frac", n.clip_frac], ["entropy", n.entropy], ["w_norm", n.w_norm]]
+  const instr = ["surprise", "wake_entropy", "clip_frac", "entropy", "w_norm", "td_abs", "td_abs_day"].map((k2) => [k2, n[k2]])
     .filter(([, v]) => v !== undefined && v !== null).map(([k2, v]) => [k2 + " = " + v, br()]);
   fill($("uinfo"), el("b", null, "night " + k), " (end of day " + n.day + ", t=" + n.t + ")", br(),
     "H = " + n.H + " hidden units", br(), instr,
-    "rows = hidden units, columns = inputs:", br(), "L/R = left/right antenna, A/B/C = notes, d = change, E/X = body, bias.", br(),
+    "rows = hidden units, columns = the " + UDIM + " inputs (names from the run's sense organ; A/B/C = notes).", br(),
     el("span", { id: "uhover", class: "mono" }));
 }
 
@@ -630,8 +648,10 @@ function drawBrain(i) {
   });
   fill($("ftable"), rows);
   fill($("faxis"), "bars start at F = " + fmt(lo, 3) + " and end at " + fmt(hi, 3) + " (shorter = lower energy). ",
-    el("span", { class: "lowtag" }, "green"), " = lowest F. The action is ", el("i", null, "sampled"),
-    ' from pi, so "chosen" need not be the lowest.');
+    el("span", { class: "lowtag" }, "green"), " = lowest F. ",
+    RUN.meta.act_mode === "egreedy"
+      ? ['The action is the lowest F with prob 1-eps, else ', el("i", null, "uniform"), ' (eps-greedy), so "chosen" need not be the lowest; pi is shown for reference only.']
+      : ["The action is ", el("i", null, "sampled"), ' from pi, so "chosen" need not be the lowest.']);
 }
 
 function drawReadout(i) {
@@ -698,10 +718,10 @@ function bindUI() {
   $("ubig").addEventListener("mousemove", (e) => {
     if (ubigNight < 0) return;
     const n = BRAIN[ubigNight], r = $("ubig").getBoundingClientRect(), h = r.height;
-    const ch = Math.max(4, Math.min(12, Math.floor((h - 30) / n.H)));
-    const j = Math.floor((e.clientX - r.left - 28) / 18), ii = Math.floor((e.clientY - r.top - 26) / ch);
+    const ch = Math.max(4, Math.min(12, Math.floor((h - UOY - 4) / n.H)));
+    const j = Math.floor((e.clientX - r.left - UOX) / UCW), ii = Math.floor((e.clientY - r.top - UOY) / ch);
     const el = $("uhover"); if (!el) return;
-    el.textContent = (ii >= 0 && ii < n.H && j >= 0 && j < n.u[0].length) ? `u[h${ii}, ${RUN.input_names[j]}] = ${n.u[ii][j].toFixed(4)}` : "";
+    el.textContent = (ii >= 0 && ii < n.H && j >= 0 && j < n.u[0].length) ? `u[h${ii}, ${inName(j)}] = ${n.u[ii][j].toFixed(4)}` : "";
   });
   window.addEventListener("keydown", (e) => {
     if (e.target && e.target.tagName === "SELECT") return;
