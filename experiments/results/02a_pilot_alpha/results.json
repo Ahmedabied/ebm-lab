@@ -1,8 +1,8 @@
 {
  "name": "02a_pilot_alpha",
  "command": "experiments/02a_pilot_alpha.py",
- "commit": "9372a71",
- "source_hash": "d15c0c27fe750399",
+ "commit": "9dd8c14",
+ "source_hash": "f448ef928d68768e",
  "seeds": [
   20,
   21,
@@ -39,6 +39,18 @@
    "day_learning": true,
    "learner": "ac",
    "alpha_v": 0.3
+  },
+  "ac-alpha_v1.0": {
+   "policy": "ebm",
+   "day_learning": true,
+   "learner": "ac",
+   "alpha_v": 1.0
+  },
+  "ac-alpha_v3.0": {
+   "policy": "ebm",
+   "day_learning": true,
+   "learner": "ac",
+   "alpha_v": 3.0
   },
   "q-alpha_q0.003": {
    "policy": "ebm",
@@ -91,7 +103,12 @@
     "poison_bites_after_first": 4,
     "H": 6,
     "seed": 20,
-    "day0_wake_entropy": 1.0966
+    "day0_wake_entropy": 1.0966,
+    "night_td_abs": [
+     0.001274,
+     0.001679,
+     0.002207
+    ]
    },
    {
     "alive": false,
@@ -104,7 +121,10 @@
     "poison_bites_after_first": 3,
     "H": 4,
     "seed": 21,
-    "day0_wake_entropy": 1.0984
+    "day0_wake_entropy": 1.0984,
+    "night_td_abs": [
+     0.001153
+    ]
    },
    {
     "alive": false,
@@ -117,7 +137,12 @@
     "poison_bites_after_first": 6,
     "H": 6,
     "seed": 22,
-    "day0_wake_entropy": 1.096
+    "day0_wake_entropy": 1.096,
+    "night_td_abs": [
+     0.001343,
+     0.002121,
+     0.002112
+    ]
    },
    {
     "alive": false,
@@ -130,7 +155,11 @@
     "poison_bites_after_first": 0,
     "H": 5,
     "seed": 23,
-    "day0_wake_entropy": 1.0947
+    "day0_wake_entropy": 1.0947,
+    "night_td_abs": [
+     0.001662,
+     0.001205
+    ]
    },
    {
     "alive": false,
@@ -143,7 +172,12 @@
     "poison_bites_after_first": 6,
     "H": 4,
     "seed": 24,
-    "day0_wake_entropy": 1.0979
+    "day0_wake_entropy": 1.0979,
+    "night_td_abs": [
+     0.00161,
+     0.001401,
+     0.001089
+    ]
    },
    {
     "alive": false,
@@ -156,7 +190,10 @@
     "poison_bites_after_first": 1,
     "H": 4,
     "seed": 25,
-    "day0_wake_entropy": 1.0954
+    "day0_wake_entropy": 1.0954,
+    "night_td_abs": [
+     0.000881
+    ]
    },
    {
     "alive": false,
@@ -169,7 +206,13 @@
     "poison_bites_after_first": 0,
     "H": 6,
     "seed": 26,
-    "day0_wake_entropy": 1.0975
+    "day0_wake_entropy": 1.0975,
+    "night_td_abs": [
+     0.001244,
+     0.003475,
+     0.002978,
+     0.002749
+    ]
    },
    {
     "alive": false,
@@ -182,7 +225,11 @@
     "poison_bites_after_first": 2,
     "H": 4,
     "seed": 27,
-    "day0_wake_entropy": 1.0973
+    "day0_wake_entropy": 1.0973,
+    "night_td_abs": [
+     0.001156,
+     0.000882
+    ]
    }
   ],
   "ac-alpha_v0.03": [
@@ -197,7 +244,11 @@
     "poison_bites_after_first": 0,
     "H": 4,
     "seed": 20,
-    "day0_wake_entropy": 1.0978
+    "day0_wake_entropy": 1.0978,
+    "night_td_abs": [
+     0.001177,
+     0.001001
+    ]
    },
    {
     "alive": false,
@@ -210,7 +261,10 @@
     "poison_bites_after_first": 3,
     "H": 4,
     "seed": 21,
-    "day0_wake_entropy": 1.0983
+    "day0_wake_entropy": 1.0983,
+    "night_td_abs": [
+     0.000781
+    ]
    },
    {
     "alive": false,
@@ -223,7 +277,12 @@
     "poison_bites_after_first": 4,
     "H": 6,
     "seed": 22,
-    "day0_wake_entropy": 1.0921
+    "day0_wake_entropy": 1.0921,
+    "night_td_abs": [
+     0.001565,
+     0.002326,
+     0.004372
+    ]
    },
    {
     "alive": false,
@@ -236,7 +295,11 @@
     "poison_bites_after_first": 0,
     "H": 5,
     "seed": 23,
-    "day0_wake_entropy": 1.0949
+    "day0_wake_entropy": 1.0949,
+    "night_td_abs": [
+     0.001798,
+     0.00128
+    ]
    },
    {
     "alive": false,
@@ -249,7 +312,11 @@
     "poison_bites_after_first": 2,
     "H": 4,
     "seed": 24,
-    "day0_wake_entropy": 1.0979
+    "day0_wake_entropy": 1.0979,
+    "night_td_abs": [
+     0.001806,
+     0.001081
+    ]
    },
    {
     "alive": false,
@@ -262,7 +329,10 @@
     "poison_bites_after_first": 1,
     "H": 4,
     "seed": 25,
-    "day0_wake_entropy": 1.096
+    "day0_wake_entropy": 1.096,
+    "night_td_abs": [
+     0.000546
+    ]
    },
    {
     "alive": false,
@@ -275,7 +345,12 @@
     "poison_bites_after_first": 0,
     "H": 6,
     "seed": 26,
-    "day0_wake_entropy": 1.0975
+    "day0_wake_entropy": 1.0975,
+    "night_td_abs": [
+     0.001091,
+     0.00463,
+     0.003225
+    ]
    },
    {
     "alive": false,
@@ -288,7 +363,11 @@
     "poison_bites_after_first": 2,
     "H": 4,
     "seed": 27,
-    "day0_wake_entropy": 1.0974
+    "day0_wake_entropy": 1.0974,
+    "night_td_abs": [
+     0.001254,
+     0.000949
+    ]
    }
   ],
   "ac-alpha_v0.1": [
@@ -303,7 +382,15 @@
     "poison_bites_after_first": 9,
     "H": 9,
     "seed": 20,
-    "day0_wake_entropy": 1.0954
+    "day0_wake_entropy": 1.0954,
+    "night_td_abs": [
+     0.001874,
+     0.003689,
+     0.0049,
+     0.004843,
+     0.007753,
+     0.009577
+    ]
    },
    {
     "alive": false,
@@ -316,7 +403,12 @@
     "poison_bites_after_first": 6,
     "H": 6,
     "seed": 21,
-    "day0_wake_entropy": 1.0982
+    "day0_wake_entropy": 1.0982,
+    "night_td_abs": [
+     0.00132,
+     0.002487,
+     0.003057
+    ]
    },
    {
     "alive": false,
@@ -329,7 +421,12 @@
     "poison_bites_after_first": 2,
     "H": 5,
     "seed": 22,
-    "day0_wake_entropy": 1.0935
+    "day0_wake_entropy": 1.0935,
+    "night_td_abs": [
+     0.00257,
+     0.004053,
+     0.004418
+    ]
    },
    {
     "alive": false,
@@ -342,7 +439,12 @@
     "poison_bites_after_first": 1,
     "H": 7,
     "seed": 23,
-    "day0_wake_entropy": 1.0952
+    "day0_wake_entropy": 1.0952,
+    "night_td_abs": [
+     0.002873,
+     0.004233,
+     0.004549
+    ]
    },
    {
     "alive": false,
@@ -355,7 +457,10 @@
     "poison_bites_after_first": 2,
     "H": 4,
     "seed": 24,
-    "day0_wake_entropy": 1.0957
+    "day0_wake_entropy": 1.0957,
+    "night_td_abs": [
+     0.000726
+    ]
    },
    {
     "alive": false,
@@ -368,7 +473,11 @@
     "poison_bites_after_first": 5,
     "H": 4,
     "seed": 25,
-    "day0_wake_entropy": 1.0965
+    "day0_wake_entropy": 1.0965,
+    "night_td_abs": [
+     0.000561,
+     0.00322
+    ]
    },
    {
     "alive": false,
@@ -381,7 +490,13 @@
     "poison_bites_after_first": 2,
     "H": 5,
     "seed": 26,
-    "day0_wake_entropy": 1.0984
+    "day0_wake_entropy": 1.0984,
+    "night_td_abs": [
+     0.002518,
+     0.005852,
+     0.00414,
+     0.00244
+    ]
    },
    {
     "alive": false,
@@ -394,7 +509,10 @@
     "poison_bites_after_first": 0,
     "H": 4,
     "seed": 27,
-    "day0_wake_entropy": 1.0967
+    "day0_wake_entropy": 1.0967,
+    "night_td_abs": [
+     0.001459
+    ]
    }
   ],
   "ac-alpha_v0.3": [
@@ -409,7 +527,16 @@
     "poison_bites_after_first": 30,
     "H": 5,
     "seed": 20,
-    "day0_wake_entropy": 1.0963
+    "day0_wake_entropy": 1.0963,
+    "night_td_abs": [
+     0.00259,
+     0.001567,
+     0.002986,
+     0.003568,
+     0.003228,
+     0.002583,
+     0.00222
+    ]
    },
    {
     "alive": false,
@@ -422,7 +549,18 @@
     "poison_bites_after_first": 14,
     "H": 9,
     "seed": 21,
-    "day0_wake_entropy": 1.0983
+    "day0_wake_entropy": 1.0983,
+    "night_td_abs": [
+     0.001374,
+     0.003978,
+     0.007578,
+     0.003218,
+     0.002584,
+     0.002404,
+     0.004003,
+     0.004711,
+     0.007679
+    ]
    },
    {
     "alive": false,
@@ -435,7 +573,11 @@
     "poison_bites_after_first": 0,
     "H": 4,
     "seed": 22,
-    "day0_wake_entropy": 1.0966
+    "day0_wake_entropy": 1.0966,
+    "night_td_abs": [
+     0.002354,
+     0.001658
+    ]
    },
    {
     "alive": true,
@@ -448,7 +590,24 @@
     "poison_bites_after_first": 25,
     "H": 6,
     "seed": 23,
-    "day0_wake_entropy": 1.0979
+    "day0_wake_entropy": 1.0979,
+    "night_td_abs": [
+     0.001778,
+     0.00249,
+     0.002937,
+     0.002758,
+     0.002228,
+     0.000527,
+     0.000577,
+     0.000819,
+     0.000751,
+     0.00162,
+     0.000909,
+     0.000801,
+     0.000219,
+     0.000162,
+     0.000178
+    ]
    },
    {
     "alive": false,
@@ -461,7 +620,10 @@
     "poison_bites_after_first": 2,
     "H": 4,
     "seed": 24,
-    "day0_wake_entropy": 1.0952
+    "day0_wake_entropy": 1.0952,
+    "night_td_abs": [
+     0.000943
+    ]
    },
    {
     "alive": false,
@@ -474,7 +636,12 @@
     "poison_bites_after_first": 2,
     "H": 6,
     "seed": 25,
-    "day0_wake_entropy": 1.0969
+    "day0_wake_entropy": 1.0969,
+    "night_td_abs": [
+     0.003232,
+     0.004762,
+     0.005006
+    ]
    },
    {
     "alive": false,
@@ -487,7 +654,10 @@
     "poison_bites_after_first": 10,
     "H": 4,
     "seed": 26,
-    "day0_wake_entropy": 1.0945
+    "day0_wake_entropy": 1.0945,
+    "night_td_abs": [
+     0.002039
+    ]
    },
    {
     "alive": false,
@@ -500,7 +670,312 @@
     "poison_bites_after_first": 7,
     "H": 6,
     "seed": 27,
-    "day0_wake_entropy": 1.095
+    "day0_wake_entropy": 1.095,
+    "night_td_abs": [
+     0.002066,
+     0.001801,
+     0.010404,
+     0.005622,
+     0.004868,
+     0.002443,
+     0.002085
+    ]
+   }
+  ],
+  "ac-alpha_v1.0": [
+   {
+    "alive": false,
+    "days": 2,
+    "ticks_alive": 727,
+    "food": 0.25,
+    "poison": 0.1,
+    "mean_drive": 0.36182,
+    "first_food_t": 96,
+    "poison_bites_after_first": 1,
+    "H": 4,
+    "seed": 20,
+    "day0_wake_entropy": 1.0967,
+    "night_td_abs": [
+     0.001504,
+     0.001541
+    ]
+   },
+   {
+    "alive": false,
+    "days": 3,
+    "ticks_alive": 1352,
+    "food": 2.85,
+    "poison": 0.15,
+    "mean_drive": 0.17636,
+    "first_food_t": 76,
+    "poison_bites_after_first": 2,
+    "H": 4,
+    "seed": 21,
+    "day0_wake_entropy": 1.097,
+    "night_td_abs": [
+     0.001876,
+     0.001062,
+     0.001241,
+     0.001701
+    ]
+   },
+   {
+    "alive": false,
+    "days": 6,
+    "ticks_alive": 2108,
+    "food": 2.3,
+    "poison": 0.4,
+    "mean_drive": 0.25668,
+    "first_food_t": 54,
+    "poison_bites_after_first": 7,
+    "H": 7,
+    "seed": 22,
+    "day0_wake_entropy": 1.0973,
+    "night_td_abs": [
+     0.002747,
+     0.002153,
+     0.001864,
+     0.00386,
+     0.004984,
+     0.003877
+    ]
+   },
+   {
+    "alive": false,
+    "days": 3,
+    "ticks_alive": 1082,
+    "food": 0.8,
+    "poison": 0.25,
+    "mean_drive": 0.43208,
+    "first_food_t": 50,
+    "poison_bites_after_first": 4,
+    "H": 7,
+    "seed": 23,
+    "day0_wake_entropy": 1.0982,
+    "night_td_abs": [
+     0.004689,
+     0.003391,
+     0.004966
+    ]
+   },
+   {
+    "alive": false,
+    "days": 1,
+    "ticks_alive": 622,
+    "food": 0.15,
+    "poison": 0.15,
+    "mean_drive": 0.36599,
+    "first_food_t": 4,
+    "poison_bites_after_first": 2,
+    "H": 4,
+    "seed": 24,
+    "day0_wake_entropy": 1.0952,
+    "night_td_abs": [
+     0.001356
+    ]
+   },
+   {
+    "alive": false,
+    "days": 3,
+    "ticks_alive": 1222,
+    "food": 1.0,
+    "poison": 0.25,
+    "mean_drive": 0.46513,
+    "first_food_t": 51,
+    "poison_bites_after_first": 4,
+    "H": 6,
+    "seed": 25,
+    "day0_wake_entropy": 1.0947,
+    "night_td_abs": [
+     0.006042,
+     0.002824,
+     0.004329
+    ]
+   },
+   {
+    "alive": true,
+    "days": 15,
+    "ticks_alive": 5250,
+    "food": 27.15,
+    "poison": 1.35,
+    "mean_drive": 0.06169,
+    "first_food_t": 236,
+    "poison_bites_after_first": 26,
+    "H": 8,
+    "seed": 26,
+    "day0_wake_entropy": 1.0959,
+    "night_td_abs": [
+     0.002233,
+     0.005038,
+     0.003899,
+     0.0037,
+     0.001886,
+     0.001127,
+     0.001597,
+     0.001744,
+     0.001362,
+     0.00104,
+     0.001246,
+     0.001725,
+     0.000879,
+     0.000245,
+     0.000135
+    ]
+   },
+   {
+    "alive": false,
+    "days": 1,
+    "ticks_alive": 565,
+    "food": 0.05,
+    "poison": 0.1,
+    "mean_drive": 0.40524,
+    "first_food_t": 80,
+    "poison_bites_after_first": 1,
+    "H": 4,
+    "seed": 27,
+    "day0_wake_entropy": 1.0974,
+    "night_td_abs": [
+     0.00163
+    ]
+   }
+  ],
+  "ac-alpha_v3.0": [
+   {
+    "alive": false,
+    "days": 2,
+    "ticks_alive": 711,
+    "food": 0.25,
+    "poison": 0.2,
+    "mean_drive": 0.41435,
+    "first_food_t": 96,
+    "poison_bites_after_first": 3,
+    "H": 5,
+    "seed": 20,
+    "day0_wake_entropy": 1.0962,
+    "night_td_abs": [
+     0.002041,
+     0.007704
+    ]
+   },
+   {
+    "alive": false,
+    "days": 2,
+    "ticks_alive": 767,
+    "food": 0.35,
+    "poison": 0.25,
+    "mean_drive": 0.33981,
+    "first_food_t": 76,
+    "poison_bites_after_first": 4,
+    "H": 4,
+    "seed": 21,
+    "day0_wake_entropy": 1.0971,
+    "night_td_abs": [
+     0.059004,
+     0.004347
+    ]
+   },
+   {
+    "alive": false,
+    "days": 2,
+    "ticks_alive": 792,
+    "food": 0.35,
+    "poison": 0.1,
+    "mean_drive": 0.31665,
+    "first_food_t": 54,
+    "poison_bites_after_first": 1,
+    "H": 4,
+    "seed": 22,
+    "day0_wake_entropy": 0.0325,
+    "night_td_abs": [
+     0.318594,
+     6.984331
+    ]
+   },
+   {
+    "alive": false,
+    "days": 4,
+    "ticks_alive": 1409,
+    "food": 1.25,
+    "poison": 0.2,
+    "mean_drive": 0.42409,
+    "first_food_t": 50,
+    "poison_bites_after_first": 3,
+    "H": 6,
+    "seed": 23,
+    "day0_wake_entropy": 1.0739,
+    "night_td_abs": [
+     0.019039,
+     0.002447,
+     0.303045,
+     0.077914
+    ]
+   },
+   {
+    "alive": false,
+    "days": 2,
+    "ticks_alive": 892,
+    "food": 0.5,
+    "poison": 0.15,
+    "mean_drive": 0.27634,
+    "first_food_t": 4,
+    "poison_bites_after_first": 2,
+    "H": 4,
+    "seed": 24,
+    "day0_wake_entropy": 0.0494,
+    "night_td_abs": [
+     2.319522,
+     0.609866
+    ]
+   },
+   {
+    "alive": false,
+    "days": 1,
+    "ticks_alive": 598,
+    "food": 0.1,
+    "poison": 0.1,
+    "mean_drive": 0.38075,
+    "first_food_t": 51,
+    "poison_bites_after_first": 1,
+    "H": 4,
+    "seed": 25,
+    "day0_wake_entropy": 1.0904,
+    "night_td_abs": [
+     0.007114
+    ]
+   },
+   {
+    "alive": false,
+    "days": 1,
+    "ticks_alive": 613,
+    "food": 0.1,
+    "poison": 0.0,
+    "mean_drive": 0.39484,
+    "first_food_t": 236,
+    "poison_bites_after_first": 0,
+    "H": 4,
+    "seed": 26,
+    "day0_wake_entropy": 1.098,
+    "night_td_abs": [
+     0.001862
+    ]
+   },
+   {
+    "alive": false,
+    "days": 3,
+    "ticks_alive": 1128,
+    "food": 0.85,
+    "poison": 0.15,
+    "mean_drive": 0.26967,
+    "first_food_t": 80,
+    "poison_bites_after_first": 2,
+    "H": 6,
+    "seed": 27,
+    "day0_wake_entropy": 1.091,
+    "night_td_abs": [
+     0.008079,
+     0.192164,
+     0.083866
+    ]
    }
   ],
   "q-alpha_q0.003": [
@@ -515,7 +990,10 @@
     "poison_bites_after_first": 3,
     "H": 4,
     "seed": 20,
-    "day0_wake_entropy": 1.0983
+    "day0_wake_entropy": 1.0983,
+    "night_td_abs": [
+     0.209452
+    ]
    },
    {
     "alive": false,
@@ -528,7 +1006,11 @@
     "poison_bites_after_first": 0,
     "H": 5,
     "seed": 21,
-    "day0_wake_entropy": 1.0982
+    "day0_wake_entropy": 1.0982,
+    "night_td_abs": [
+     0.204327,
+     0.162191
+    ]
    },
    {
     "alive": false,
@@ -541,7 +1023,10 @@
     "poison_bites_after_first": 2,
     "H": 4,
     "seed": 22,
-    "day0_wake_entropy": 1.0984
+    "day0_wake_entropy": 1.0984,
+    "night_td_abs": [
+     0.211443
+    ]
    },
    {
     "alive": false,
@@ -554,7 +1039,12 @@
     "poison_bites_after_first": 0,
     "H": 6,
     "seed": 23,
-    "day0_wake_entropy": 1.0981
+    "day0_wake_entropy": 1.0981,
+    "night_td_abs": [
+     0.206669,
+     0.162506,
+     0.180386
+    ]
    },
    {
     "alive": false,
@@ -567,7 +1057,12 @@
     "poison_bites_after_first": 2,
     "H": 6,
     "seed": 24,
-    "day0_wake_entropy": 1.0981
+    "day0_wake_entropy": 1.0981,
+    "night_td_abs": [
+     0.196396,
+     0.151371,
+     0.168851
+    ]
    },
    {
     "alive": false,
@@ -580,7 +1075,12 @@
     "poison_bites_after_first": 4,
     "H": 6,
     "seed": 25,
-    "day0_wake_entropy": 1.0981
+    "day0_wake_entropy": 1.0981,
+    "night_td_abs": [
+     0.2037,
+     0.15801,
+     0.173448
+    ]
    },
    {
     "alive": false,
@@ -593,7 +1093,10 @@
     "poison_bites_after_first": 0,
     "H": 4,
     "seed": 26,
-    "day0_wake_entropy": 1.0983
+    "day0_wake_entropy": 1.0983,
+    "night_td_abs": [
+     0.210905
+    ]
    },
    {
     "alive": false,
@@ -606,7 +1109,12 @@
     "poison_bites_after_first": 5,
     "H": 6,
     "seed": 27,
-    "day0_wake_entropy": 1.0982
+    "day0_wake_entropy": 1.0982,
+    "night_td_abs": [
+     0.196974,
+     0.153794,
+     0.17074
+    ]
    }
   ],
   "q-alpha_q0.01": [
@@ -621,7 +1129,12 @@
     "poison_bites_after_first": 2,
     "H": 4,
     "seed": 20,
-    "day0_wake_entropy": 1.0974
+    "day0_wake_entropy": 1.0974,
+    "night_td_abs": [
+     0.105855,
+     0.05804,
+     0.032714
+    ]
    },
    {
     "alive": false,
@@ -634,7 +1147,11 @@
     "poison_bites_after_first": 4,
     "H": 5,
     "seed": 21,
-    "day0_wake_entropy": 1.0968
+    "day0_wake_entropy": 1.0968,
+    "night_td_abs": [
+     0.114419,
+     0.068761
+    ]
    },
    {
     "alive": false,
@@ -647,7 +1164,11 @@
     "poison_bites_after_first": 2,
     "H": 5,
     "seed": 22,
-    "day0_wake_entropy": 1.0973
+    "day0_wake_entropy": 1.0973,
+    "night_td_abs": [
+     0.111366,
+     0.063382
+    ]
    },
    {
     "alive": false,
@@ -660,7 +1181,11 @@
     "poison_bites_after_first": 8,
     "H": 5,
     "seed": 23,
-    "day0_wake_entropy": 1.0971
+    "day0_wake_entropy": 1.0971,
+    "night_td_abs": [
+     0.113526,
+     0.065706
+    ]
    },
    {
     "alive": false,
@@ -673,7 +1198,11 @@
     "poison_bites_after_first": 2,
     "H": 5,
     "seed": 24,
-    "day0_wake_entropy": 1.0974
+    "day0_wake_entropy": 1.0974,
+    "night_td_abs": [
+     0.107416,
+     0.062632
+    ]
    },
    {
     "alive": false,
@@ -686,7 +1215,11 @@
     "poison_bites_after_first": 3,
     "H": 5,
     "seed": 25,
-    "day0_wake_entropy": 1.0973
+    "day0_wake_entropy": 1.0973,
+    "night_td_abs": [
+     0.107247,
+     0.060139
+    ]
    },
    {
     "alive": false,
@@ -699,7 +1232,11 @@
     "poison_bites_after_first": 4,
     "H": 5,
     "seed": 26,
-    "day0_wake_entropy": 1.0968
+    "day0_wake_entropy": 1.0968,
+    "night_td_abs": [
+     0.111961,
+     0.062959
+    ]
    },
    {
     "alive": false,
@@ -712,7 +1249,12 @@
     "poison_bites_after_first": 1,
     "H": 5,
     "seed": 27,
-    "day0_wake_entropy": 1.0973
+    "day0_wake_entropy": 1.0973,
+    "night_td_abs": [
+     0.102032,
+     0.052603,
+     0.034631
+    ]
    }
   ],
   "q-alpha_q0.03": [
@@ -727,7 +1269,11 @@
     "poison_bites_after_first": 2,
     "H": 4,
     "seed": 20,
-    "day0_wake_entropy": 1.0968
+    "day0_wake_entropy": 1.0968,
+    "night_td_abs": [
+     0.031045,
+     0.019159
+    ]
    },
    {
     "alive": false,
@@ -740,7 +1286,11 @@
     "poison_bites_after_first": 0,
     "H": 5,
     "seed": 21,
-    "day0_wake_entropy": 1.0972
+    "day0_wake_entropy": 1.0972,
+    "night_td_abs": [
+     0.032059,
+     0.017337
+    ]
    },
    {
     "alive": false,
@@ -753,7 +1303,11 @@
     "poison_bites_after_first": 3,
     "H": 4,
     "seed": 22,
-    "day0_wake_entropy": 1.097
+    "day0_wake_entropy": 1.097,
+    "night_td_abs": [
+     0.030878,
+     0.017836
+    ]
    },
    {
     "alive": false,
@@ -766,7 +1320,11 @@
     "poison_bites_after_first": 5,
     "H": 5,
     "seed": 23,
-    "day0_wake_entropy": 1.097
+    "day0_wake_entropy": 1.097,
+    "night_td_abs": [
+     0.030459,
+     0.019258
+    ]
    },
    {
     "alive": false,
@@ -779,7 +1337,11 @@
     "poison_bites_after_first": 1,
     "H": 5,
     "seed": 24,
-    "day0_wake_entropy": 1.0968
+    "day0_wake_entropy": 1.0968,
+    "night_td_abs": [
+     0.032136,
+     0.015774
+    ]
    },
    {
     "alive": false,
@@ -792,7 +1354,12 @@
     "poison_bites_after_first": 3,
     "H": 6,
     "seed": 25,
-    "day0_wake_entropy": 1.0973
+    "day0_wake_entropy": 1.0973,
+    "night_td_abs": [
+     0.032429,
+     0.01811,
+     0.020701
+    ]
    },
    {
     "alive": false,
@@ -805,7 +1372,12 @@
     "poison_bites_after_first": 3,
     "H": 7,
     "seed": 26,
-    "day0_wake_entropy": 1.0973
+    "day0_wake_entropy": 1.0973,
+    "night_td_abs": [
+     0.034854,
+     0.020482,
+     0.023689
+    ]
    },
    {
     "alive": false,
@@ -818,7 +1390,12 @@
     "poison_bites_after_first": 0,
     "H": 6,
     "seed": 27,
-    "day0_wake_entropy": 1.0971
+    "day0_wake_entropy": 1.0971,
+    "night_td_abs": [
+     0.034047,
+     0.019524,
+     0.022974
+    ]
    }
   ],
   "q-alpha_q0.1": [
@@ -833,7 +1410,11 @@
     "poison_bites_after_first": 1,
     "H": 5,
     "seed": 20,
-    "day0_wake_entropy": 1.0984
+    "day0_wake_entropy": 1.0984,
+    "night_td_abs": [
+     0.011001,
+     0.021335
+    ]
    },
    {
     "alive": false,
@@ -846,7 +1427,10 @@
     "poison_bites_after_first": 1,
     "H": 4,
     "seed": 21,
-    "day0_wake_entropy": 1.0981
+    "day0_wake_entropy": 1.0981,
+    "night_td_abs": [
+     0.017812
+    ]
    },
    {
     "alive": false,
@@ -859,7 +1443,13 @@
     "poison_bites_after_first": 2,
     "H": 7,
     "seed": 22,
-    "day0_wake_entropy": 1.0981
+    "day0_wake_entropy": 1.0981,
+    "night_td_abs": [
+     0.012721,
+     0.014193,
+     0.036733,
+     0.013659
+    ]
    },
    {
     "alive": false,
@@ -872,7 +1462,11 @@
     "poison_bites_after_first": 0,
     "H": 4,
     "seed": 23,
-    "day0_wake_entropy": 1.0974
+    "day0_wake_entropy": 1.0974,
+    "night_td_abs": [
+     0.014541,
+     0.021729
+    ]
    },
    {
     "alive": false,
@@ -885,7 +1479,10 @@
     "poison_bites_after_first": 1,
     "H": 4,
     "seed": 24,
-    "day0_wake_entropy": 1.0976
+    "day0_wake_entropy": 1.0976,
+    "night_td_abs": [
+     0.017927
+    ]
    },
    {
     "alive": false,
@@ -898,7 +1495,10 @@
     "poison_bites_after_first": 0,
     "H": 4,
     "seed": 25,
-    "day0_wake_entropy": 1.0979
+    "day0_wake_entropy": 1.0979,
+    "night_td_abs": [
+     0.016362
+    ]
    },
    {
     "alive": false,
@@ -911,7 +1511,11 @@
     "poison_bites_after_first": 0,
     "H": 5,
     "seed": 26,
-    "day0_wake_entropy": 1.0983
+    "day0_wake_entropy": 1.0983,
+    "night_td_abs": [
+     0.012269,
+     0.023383
+    ]
    },
    {
     "alive": false,
@@ -924,7 +1528,14 @@
     "poison_bites_after_first": 11,
     "H": 6,
     "seed": 27,
-    "day0_wake_entropy": 1.0981
+    "day0_wake_entropy": 1.0981,
+    "night_td_abs": [
+     0.013614,
+     0.012731,
+     0.014908,
+     0.026321,
+     0.03194
+    ]
    }
   ],
   "q-alpha_q0.3": [
@@ -939,7 +1550,11 @@
     "poison_bites_after_first": 1,
     "H": 5,
     "seed": 20,
-    "day0_wake_entropy": 1.0981
+    "day0_wake_entropy": 1.0981,
+    "night_td_abs": [
+     0.013163,
+     0.018008
+    ]
    },
    {
     "alive": false,
@@ -952,7 +1567,11 @@
     "poison_bites_after_first": 0,
     "H": 5,
     "seed": 21,
-    "day0_wake_entropy": 1.0984
+    "day0_wake_entropy": 1.0984,
+    "night_td_abs": [
+     0.015374,
+     0.020192
+    ]
    },
    {
     "alive": false,
@@ -965,7 +1584,11 @@
     "poison_bites_after_first": 1,
     "H": 5,
     "seed": 22,
-    "day0_wake_entropy": 1.0982
+    "day0_wake_entropy": 1.0982,
+    "night_td_abs": [
+     0.007347,
+     0.018708
+    ]
    },
    {
     "alive": false,
@@ -978,7 +1601,10 @@
     "poison_bites_after_first": 0,
     "H": 4,
     "seed": 23,
-    "day0_wake_entropy": 1.098
+    "day0_wake_entropy": 1.098,
+    "night_td_abs": [
+     0.015157
+    ]
    },
    {
     "alive": false,
@@ -991,7 +1617,10 @@
     "poison_bites_after_first": 0,
     "H": 4,
     "seed": 24,
-    "day0_wake_entropy": 1.0964
+    "day0_wake_entropy": 1.0964,
+    "night_td_abs": [
+     0.014965
+    ]
    },
    {
     "alive": false,
@@ -1004,7 +1633,10 @@
     "poison_bites_after_first": 1,
     "H": 4,
     "seed": 25,
-    "day0_wake_entropy": 1.0983
+    "day0_wake_entropy": 1.0983,
+    "night_td_abs": [
+     0.015441
+    ]
    },
    {
     "alive": false,
@@ -1017,7 +1649,10 @@
     "poison_bites_after_first": 0,
     "H": 4,
     "seed": 26,
-    "day0_wake_entropy": 1.0985
+    "day0_wake_entropy": 1.0985,
+    "night_td_abs": [
+     0.013301
+    ]
    },
    {
     "alive": false,
@@ -1030,7 +1665,10 @@
     "poison_bites_after_first": 3,
     "H": 4,
     "seed": 27,
-    "day0_wake_entropy": 1.0983
+    "day0_wake_entropy": 1.0983,
+    "night_td_abs": [
+     0.014209
+    ]
    }
   ],
   "ebm-dn (ref)": [
@@ -1045,7 +1683,10 @@
     "poison_bites_after_first": 0,
     "H": 4,
     "seed": 20,
-    "day0_wake_entropy": 1.0849
+    "day0_wake_entropy": 1.0849,
+    "night_td_abs": [
+     null
+    ]
    },
    {
     "alive": false,
@@ -1058,7 +1699,11 @@
     "poison_bites_after_first": 5,
     "H": 5,
     "seed": 21,
-    "day0_wake_entropy": 1.0979
+    "day0_wake_entropy": 1.0979,
+    "night_td_abs": [
+     null,
+     null
+    ]
    },
    {
     "alive": false,
@@ -1071,7 +1716,11 @@
     "poison_bites_after_first": 0,
     "H": 5,
     "seed": 22,
-    "day0_wake_entropy": 1.0955
+    "day0_wake_entropy": 1.0955,
+    "night_td_abs": [
+     null,
+     null
+    ]
    },
    {
     "alive": false,
@@ -1084,7 +1733,11 @@
     "poison_bites_after_first": 0,
     "H": 4,
     "seed": 23,
-    "day0_wake_entropy": 1.0814
+    "day0_wake_entropy": 1.0814,
+    "night_td_abs": [
+     null,
+     null
+    ]
    },
    {
     "alive": false,
@@ -1097,7 +1750,17 @@
     "poison_bites_after_first": 99,
     "H": 6,
     "seed": 24,
-    "day0_wake_entropy": 1.095
+    "day0_wake_entropy": 1.095,
+    "night_td_abs": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
    },
    {
     "alive": false,
@@ -1110,7 +1773,11 @@
     "poison_bites_after_first": 0,
     "H": 4,
     "seed": 25,
-    "day0_wake_entropy": 1.0962
+    "day0_wake_entropy": 1.0962,
+    "night_td_abs": [
+     null,
+     null
+    ]
    },
    {
     "alive": false,
@@ -1123,7 +1790,10 @@
     "poison_bites_after_first": 3,
     "H": 5,
     "seed": 26,
-    "day0_wake_entropy": 1.0904
+    "day0_wake_entropy": 1.0904,
+    "night_td_abs": [
+     null
+    ]
    },
    {
     "alive": false,
@@ -1136,7 +1806,13 @@
     "poison_bites_after_first": 60,
     "H": 5,
     "seed": 27,
-    "day0_wake_entropy": 1.0975
+    "day0_wake_entropy": 1.0975,
+    "night_td_abs": [
+     null,
+     null,
+     null,
+     null
+    ]
    }
   ],
   "tabular_q (ref)": [
@@ -1151,7 +1827,14 @@
     "poison_bites_after_first": 6,
     "H": 0,
     "seed": 20,
-    "day0_wake_entropy": null
+    "day0_wake_entropy": null,
+    "night_td_abs": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
    },
    {
     "alive": false,
@@ -1164,7 +1847,11 @@
     "poison_bites_after_first": 1,
     "H": 0,
     "seed": 21,
-    "day0_wake_entropy": null
+    "day0_wake_entropy": null,
+    "night_td_abs": [
+     null,
+     null
+    ]
    },
    {
     "alive": true,
@@ -1177,7 +1864,24 @@
     "poison_bites_after_first": 25,
     "H": 0,
     "seed": 22,
-    "day0_wake_entropy": null
+    "day0_wake_entropy": null,
+    "night_td_abs": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
    },
    {
     "alive": true,
@@ -1190,7 +1894,24 @@
     "poison_bites_after_first": 14,
     "H": 0,
     "seed": 23,
-    "day0_wake_entropy": null
+    "day0_wake_entropy": null,
+    "night_td_abs": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
    },
    {
     "alive": true,
@@ -1203,7 +1924,24 @@
     "poison_bites_after_first": 35,
     "H": 0,
     "seed": 24,
-    "day0_wake_entropy": null
+    "day0_wake_entropy": null,
+    "night_td_abs": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
    },
    {
     "alive": true,
@@ -1216,7 +1954,24 @@
     "poison_bites_after_first": 17,
     "H": 0,
     "seed": 25,
-    "day0_wake_entropy": null
+    "day0_wake_entropy": null,
+    "night_td_abs": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
    },
    {
     "alive": true,
@@ -1229,7 +1984,24 @@
     "poison_bites_after_first": 16,
     "H": 0,
     "seed": 26,
-    "day0_wake_entropy": null
+    "day0_wake_entropy": null,
+    "night_td_abs": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
    },
    {
     "alive": false,
@@ -1242,11 +2014,15 @@
     "poison_bites_after_first": 2,
     "H": 0,
     "seed": 27,
-    "day0_wake_entropy": null
+    "day0_wake_entropy": null,
+    "night_td_abs": [
+     null,
+     null
+    ]
    }
   ]
  },
- "seconds": 26.3,
+ "seconds": 34.0,
  "stats": {
   "ac-alpha_v0.01": {
    "ticks_alive": {
@@ -1303,6 +2079,20 @@
      1.0954,
      1.0975,
      1.0973
+    ]
+   },
+   "night_td_abs": {
+    "per_night_mean": [
+     0.0012903749999999999,
+     0.0017938333333333337,
+     0.0020965,
+     0.002749
+    ],
+    "per_night_n": [
+     8,
+     6,
+     4,
+     1
     ]
    }
   },
@@ -1362,6 +2152,18 @@
      1.0975,
      1.0974
     ]
+   },
+   "night_td_abs": {
+    "per_night_mean": [
+     0.0012522499999999999,
+     0.0018778333333333336,
+     0.0037985
+    ],
+    "per_night_n": [
+     8,
+     6,
+     2
+    ]
    }
   },
   "ac-alpha_v0.1": {
@@ -1419,6 +2221,24 @@
      1.0965,
      1.0984,
      1.0967
+    ]
+   },
+   "night_td_abs": {
+    "per_night_mean": [
+     0.0017376249999999998,
+     0.003922333333333333,
+     0.0042128,
+     0.0036414999999999998,
+     0.007753,
+     0.009577
+    ],
+    "per_night_n": [
+     8,
+     6,
+     5,
+     2,
+     1,
+     1
     ]
    }
   },
@@ -1478,6 +2298,208 @@
      1.0945,
      1.095
     ]
+   },
+   "night_td_abs": {
+    "per_night_mean": [
+     0.0020469999999999998,
+     0.002709333333333333,
+     0.0057822,
+     0.0037915,
+     0.003227,
+     0.0019892499999999997,
+     0.00222125,
+     0.002765,
+     0.004215,
+     0.00162,
+     0.000909,
+     0.000801,
+     0.000219,
+     0.000162,
+     0.000178
+    ],
+    "per_night_n": [
+     8,
+     6,
+     5,
+     4,
+     4,
+     4,
+     4,
+     2,
+     2,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ]
+   }
+  },
+  "ac-alpha_v1.0": {
+   "ticks_alive": {
+    "mean": 1616.0,
+    "lo": 844.615625,
+    "hi": 2715.678124999999,
+    "n": 8,
+    "median": 1152.0
+   },
+   "days": {
+    "mean": 4.25,
+    "lo": 1.875,
+    "hi": 7.5,
+    "n": 8,
+    "median": 3.0
+   },
+   "food": {
+    "mean": 4.31875,
+    "lo": 0.55,
+    "hi": 11.0,
+    "n": 8,
+    "median": 0.9
+   },
+   "poison": {
+    "mean": 0.34375,
+    "lo": 0.15,
+    "hi": 0.6376562499999993,
+    "n": 8,
+    "median": 0.2
+   },
+   "mean_drive": {
+    "mean": 0.31562375,
+    "lo": 0.21888340625,
+    "hi": 0.40006749999999996,
+    "n": 8,
+    "median": 0.363905
+   },
+   "poison_bites_after_first": {
+    "mean": 5.875,
+    "lo": 2.0,
+    "hi": 11.753124999999983,
+    "n": 8,
+    "median": 3.0
+   },
+   "day0_wake_entropy": {
+    "mean": 1.09655,
+    "n": 8,
+    "values": [
+     1.0967,
+     1.097,
+     1.0973,
+     1.0982,
+     1.0952,
+     1.0947,
+     1.0959,
+     1.0974
+    ]
+   },
+   "night_td_abs": {
+    "per_night_mean": [
+     0.002759625,
+     0.0026681666666666663,
+     0.0032598,
+     0.003087,
+     0.0034349999999999997,
+     0.002502,
+     0.001597,
+     0.001744,
+     0.001362,
+     0.00104,
+     0.001246,
+     0.001725,
+     0.000879,
+     0.000245,
+     0.000135
+    ],
+    "per_night_n": [
+     8,
+     6,
+     5,
+     3,
+     2,
+     2,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ]
+   }
+  },
+  "ac-alpha_v3.0": {
+   "ticks_alive": {
+    "mean": 863.75,
+    "lo": 703.49375,
+    "hi": 1053.646875,
+    "n": 8,
+    "median": 779.5
+   },
+   "days": {
+    "mean": 2.125,
+    "lo": 1.5,
+    "hi": 2.75,
+    "n": 8,
+    "median": 2.0
+   },
+   "food": {
+    "mean": 0.46875,
+    "lo": 0.24374999999999997,
+    "hi": 0.7375,
+    "n": 8,
+    "median": 0.35
+   },
+   "poison": {
+    "mean": 0.14375,
+    "lo": 0.09375,
+    "hi": 0.19374999999999998,
+    "n": 8,
+    "median": 0.15
+   },
+   "mean_drive": {
+    "mean": 0.3520625,
+    "lo": 0.313285,
+    "hi": 0.388165125,
+    "n": 8,
+    "median": 0.36028
+   },
+   "poison_bites_after_first": {
+    "mean": 2.0,
+    "lo": 1.2468750000000002,
+    "hi": 2.875,
+    "n": 8,
+    "median": 2.0
+   },
+   "day0_wake_entropy": {
+    "mean": 0.8285625,
+    "n": 8,
+    "values": [
+     1.0962,
+     1.0971,
+     0.0325,
+     1.0739,
+     0.0494,
+     1.0904,
+     1.098,
+     1.091
+    ]
+   },
+   "night_td_abs": {
+    "per_night_mean": [
+     0.341906875,
+     1.3001431666666667,
+     0.1934555,
+     0.077914
+    ],
+    "per_night_n": [
+     8,
+     6,
+     2,
+     1
+    ]
    }
   },
   "q-alpha_q0.003": {
@@ -1535,6 +2557,18 @@
      1.0981,
      1.0983,
      1.0982
+    ]
+   },
+   "night_td_abs": {
+    "per_night_mean": [
+     0.20498325,
+     0.1575744,
+     0.17335625000000002
+    ],
+    "per_night_n": [
+     8,
+     5,
+     4
     ]
    }
   },
@@ -1594,6 +2628,18 @@
      1.0968,
      1.0973
     ]
+   },
+   "night_td_abs": {
+    "per_night_mean": [
+     0.10922775000000001,
+     0.06177774999999999,
+     0.0336725
+    ],
+    "per_night_n": [
+     8,
+     8,
+     2
+    ]
    }
   },
   "q-alpha_q0.03": {
@@ -1651,6 +2697,18 @@
      1.0973,
      1.0973,
      1.0971
+    ]
+   },
+   "night_td_abs": {
+    "per_night_mean": [
+     0.032238375,
+     0.018435,
+     0.022454666666666668
+    ],
+    "per_night_n": [
+     8,
+     8,
+     3
     ]
    }
   },
@@ -1710,6 +2768,22 @@
      1.0983,
      1.0981
     ]
+   },
+   "night_td_abs": {
+    "per_night_mean": [
+     0.014530875,
+     0.018674200000000002,
+     0.0258205,
+     0.01999,
+     0.03194
+    ],
+    "per_night_n": [
+     8,
+     5,
+     2,
+     2,
+     1
+    ]
    }
   },
   "q-alpha_q0.3": {
@@ -1767,6 +2841,16 @@
      1.0983,
      1.0985,
      1.0983
+    ]
+   },
+   "night_td_abs": {
+    "per_night_mean": [
+     0.013619625,
+     0.018969333333333335
+    ],
+    "per_night_n": [
+     8,
+     3
     ]
    }
   },
