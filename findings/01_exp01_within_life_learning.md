@@ -85,8 +85,10 @@ used in EXP-01, one night of replay **collapses** the policy: end-of-night entro
 300–303 was 0.028, 0.092, 0.004, 0.139 (max 1.099), and the resting turning bias
 |π(LEFT|x0) − π(RIGHT|x0)| at a featureless sensation jumps from 0.014 (no learning) to 0.53 after the
 first night (`research/07-proof-of-possibility/m3_bias.py`, seeds 300–319). So the mechanism in
-EXP-01 is not "too weak to act on" but "too confident after one night, then unable to unlearn"
-(softmax saturation; Mei et al. 2020's gravity well). The data-starvation reading is also wrong as
+EXP-01 is not "too weak to act on" but "a nightly step 8–16× the initial weight norm that lurches the
+policy between near-deterministic corners from night to night" (hostile referee on `research/07`,
+same day: committed policies DO flip overnight, e.g. seed 313 +0.99 → −1.00, so the first wording of
+this correction, "unable to unlearn / gravity well", is itself withdrawn). The data-starvation reading is also wrong as
 stated: the batch gradient on the key weight has block-means SNR ≈ 1.9 per day with the right sign on
 96% of creature-days (`m2_snr.py`). The signal is there; the step is far too large and it lands on
 ~100 noisy directions at once. Full argument: `research/07-proof-of-possibility.md`.
