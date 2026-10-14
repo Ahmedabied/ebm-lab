@@ -40,8 +40,9 @@ class SimConfig:
     learner: str = "pg"            # pg (EXP-01 day-return REINFORCE) | ac (linear critic, TD error
                                    # lesson) | q (Q = -F, Q-learning, epsilon-greedy acting)
     gamma: float = 0.9             # TD discount for "ac" and "q" (tabular Q's gamma)
-    alpha_v: float = 0.3           # critic step size ("ac"); pilot 02a after A14 (seeds 20-27, max
-                                   # mean ticks_alive over {0.01,0.03,0.1,0.3}: top EDGE of the grid)
+    alpha_v: float = 0.3           # critic step size ("ac"); pilot 02a after A14, extended on merged
+                                   # main (seeds 20-27): max mean ticks_alive over
+                                   # {0.01,0.03,0.1,0.3,1.0,3.0}; interior (3.0 diverges)
     alpha_q: float = 0.1           # Q-mode step size ("q"); pilot 02a (seeds 20-27, max mean
                                    # ticks_alive over {0.003,0.01,0.03,0.1,0.3}; interior)
     scale_decay: float = 0.99      # "ac": EMA decay of delta^2 for the actor's running scale
