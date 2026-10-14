@@ -17,11 +17,18 @@ def main():
     p.add_argument("--T", type=float, default=1.0)
     p.add_argument("--lr", type=float, default=0.05)
     p.add_argument("--blend", default="linear", choices=["linear", "xor"])
+    p.add_argument("--sign-features", action="store_true")
+    p.add_argument("--act-mode", default="softmax", choices=["softmax", "egreedy"])
+    p.add_argument("--eps", type=float, default=0.1)
+    p.add_argument("--runs-dir", default="runs")
     a = p.parse_args()
     cfg = SimConfig(seed=a.seed, label=a.label, policy=a.policy, days=a.days, day_len=a.day_len,
-                    sleep=a.sleep, growth=a.growth, day_learning=a.day_learning)
+                    sleep=a.sleep, growth=a.growth, day_learning=a.day_learning,
+                    runs_dir=a.runs_dir)
     cfg.brain.H0 = a.H0; cfg.brain.T = a.T; cfg.brain.lr = a.lr
     cfg.world.blend_mode = a.blend
+    cfg.sense.sign_features = a.sign_features
+    cfg.brain.act_mode = a.act_mode; cfg.brain.eps = a.eps
     s = Life(cfg).run()
     print(json.dumps(s))
 

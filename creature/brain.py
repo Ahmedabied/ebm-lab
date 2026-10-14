@@ -29,6 +29,10 @@ class BrainConfig:
     lr: float = 1.0                # pilot 01d (seeds 0-7 burned): batch-mean lr; 3 epochs > 10
     init_scale: float = 0.01       # near-uniform policy at birth (pilot 01: a turning bias traps
                                    # an untrained creature in loops; see findings)
+    act_mode: str = "softmax"      # "softmax": sample π_T | "egreedy": argmin F w.p. 1-ε, else uniform
+                                   # (EXP-02). Learning stays the softmax PG at T in both modes; the
+                                   # behaviour log-prob returned by act() feeds the IS ratio π_T/β.
+    eps: float = 0.1               # exploration rate for act_mode="egreedy" (= TabularQ's ε)
 
 
 def _softplus(z):
@@ -72,12 +76,29 @@ class Brain:
         return p / p.sum(axis=1, keepdims=True)
 
     def act(self, x: np.ndarray, rng: np.random.Generator) -> tuple[int, np.ndarray, float]:
-        """Sample an action. Returns (a, F(x, ·), log π(a|x)); the log-prob is cached so that
-        sleep replay can correct for the policy having moved since (off-policy ratio)."""
+        """Choose an action. Returns (a, F(x, ·), log β(a|x)) where β is the BEHAVIOUR policy that
+        actually chose a. The log-prob is cached so that learning can importance-correct toward
+        π_T (sleep replay: the policy moved since; egreedy: β differs from π_T even online).
+
+        RNG draw order (determinism per seed is a law):
+          softmax: exactly one rng.choice(A, p=π_T) (one uniform double internally).
+          egreedy: exactly one rng.random(); if it is < ε, then exactly one rng.integers(A) (the
+                   explore action, uniform over all A, which may coincide with the greedy one);
+                   otherwise no further draw. Same order as TabularQ.act.
+        egreedy greedy action = argmin_a F(x, a), ties broken by the first index (np.argmin).
+        log β = log((1-ε) + ε/A) on the greedy action, log(ε/A) on every other action."""
         Fx = self.F(x[None, :])[0]
-        p = self.policy(x[None, :])[0]
-        a = int(rng.choice(A, p=p))
-        return a, Fx, float(np.log(p[a]))
+        if self.cfg.act_mode == "softmax":
+            p = self.policy(x[None, :])[0]
+            a = int(rng.choice(A, p=p))
+            return a, Fx, float(np.log(p[a]))
+        if self.cfg.act_mode == "egreedy":
+            eps = self.cfg.eps
+            greedy = int(np.argmin(Fx))
+            a = int(rng.integers(A)) if rng.random() < eps else greedy
+            pb = (1.0 - eps) + eps / A if a == greedy else eps / A
+            return a, Fx, float(np.log(pb))
+        raise ValueError(f"unknown act_mode {self.cfg.act_mode!r}")
 
     def logp(self, X: np.ndarray, a: np.ndarray) -> np.ndarray:
         P = self.policy(X)
