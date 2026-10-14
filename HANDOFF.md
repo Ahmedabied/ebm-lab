@@ -8,6 +8,11 @@ old step size collapses on night 0 (`research/07`). Two referee-found bugs were 
 (A14 critic scale, A16 Q centring; plus the unclipped behaviour ratio); one baseline defect was found
 and kept as the pre-registered target with a textbook variant added (A17).
 
+## Goal pivot first
+Read `decisions/0002_goal_pivot.md`. The first deliverable next session is the written list of
+brain-cell properties the EBM must mimic, each with a source and a falsifiable test; EXP-03 is chosen
+from that list, not from the lever list below.
+
 ## Decisions that are Ahmed's (nothing below is started)
 1. **Which next experiment (EXP-03), one only.** `findings/02` §"What it points to" lists five;
    the orchestrator's recommendation, if asked: **(4) sleep on a learner that actually learns** (the

@@ -2,6 +2,11 @@
 
 Updated 2026-10-14, end of session 03. Everything below is committed (see `git log`).
 
+## Goal pivot (2026-10-15, Ahmed): see `decisions/0002_goal_pivot.md`
+Experiment goal = the smallest creature with brain cells similar to humans; EBM goal = mimic how a
+brain cell learns, connects, functions, dies and is born. Verdict on EXP-02 under those goals is in
+the decision file (learn: yes; function: yes; connect: unused; born: placeholder; die: missing).
+
 ## Where we are
 - **First positive within-life learning result (EXP-02, `findings/02`).** The energy-based brain,
   trained as a value function (Q = −F, ε-greedy, Q-learning target, online + nightly replay: arm
