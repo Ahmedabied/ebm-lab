@@ -53,7 +53,9 @@ real: the creature frames, the weights, the numbers come from the lab's own `run
   this swap once; it is the same lineage.
 - **LaTeX** (needed for `MathTex`): no system TeX, sudo needs a password → **TinyTeX installed in
   `~/.TinyTeX` without sudo** with ManimCE's package list (install log `/tmp/tinytex-install.log`,
-  `/tmp/tlmgr.log`). Verify with a one-formula render before building anything.
+  `/tmp/tlmgr.log`). **Verified 2026-10-15 00:40:** `scenes/smoke_tex.py` rendered the full F(x,a) formula with MathTex
+  (TeX Live 2026 via TinyTeX, dvisvgm 3.6); `PATH` must include `~/.TinyTeX/bin/x86_64-linux` when
+  running manim.
 - Tools present: ffmpeg 6.1, sox, 16 cores, 15 GB RAM, 35 GB disk free. Renders at 1080p60 on CPU.
 - No screen popups: write the mp4 to disk and give the path. YouTube upload is Ahmed's.
 
