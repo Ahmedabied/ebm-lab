@@ -1,39 +1,50 @@
 # STATE — EBM lab
 
-Updated 2026-10-13, end of session 02. Commit: see `git log` (everything below is committed).
+Updated 2026-10-14, end of session 03. Everything below is committed (see `git log`).
 
 ## Where we are
-- **Creature v0 is built, tested, visualised and measured.** 23 law tests pass (`uv run pytest`).
-  One life runs in ~0.1 s. Code: `creature/` (physics, world, body, senses, brain, baselines, sim, run, export).
-- **The first pre-registered experiment (EXP-01) is done and its main prediction FAILED:** within-life
-  EBM learning did not beat no learning (973 vs 1224 ticks, linear world, 20 fresh seeds). The pilot's
-  2178 on tuning seeds did not replicate. Full write-up: `findings/01_exp01_within_life_learning.md`.
-  Plots: `experiments/results/01_main_{ticks,food}.png`.
-- **Viewer works:** `viewer/index.html` (vanilla JS, verified headless). Exported lives to watch:
-  `runs/exp01-linear/100-{ebm,braitenberg,oracle,tabular_q}/run.json`, `runs/exp01-xor/100/run.json`.
-  Serve: `cd ~/ebm-lab && uv run python -m http.server 8765` → `http://localhost:8765/viewer/?run=runs/exp01-linear/100-ebm/run.json`.
-- **Research seats R1–R4 filed** (`research/03`–`06`), each ending with v0 recommendations and
-  questions for Ahmed. Adopted amendments: `DESIGN-AMENDMENTS.md` A1–A13; the not-yet-implemented
-  recommendations are listed at its foot.
+- **First positive within-life learning result (EXP-02, `findings/02`).** The energy-based brain,
+  trained as a value function (Q = −F, ε-greedy, Q-learning target, online + nightly replay: arm
+  `ebm-td`), forages by smell: 4113 [3210, 5014] ticks linear, 3876 xor, 15/20 lives at the 15-day
+  ceiling; reproduces on fresh seeds; a frozen day-5 brain still forages; mirrored antennae kill it.
+  It **reaches tabular Q's level; superiority is not shown.** Policy-gradient training of the same
+  model at EXP-01's step size does not learn (night-0 collapse). P1, P2 failed; P3, P5 held; P4 not
+  supported. Scored table and referee limits in `findings/02`.
+- **Proof-of-possibility note (`research/07`)**, twice refereed: the model class contains the forager
+  (2 weights); the body's lesson has per-day SNR ≈ 1.8–1.9 on the key weight; EXP-01's learner failed
+  because its nightly step is 8–16× the initial weight norm (lr/T² is one knob), not from data
+  starvation; the xor world does not force the conjunction (a pure A-chaser survives it); biology
+  precedent (worm, larva) always has an innate reinforcer and fixed plasticity sites.
+- **Corrections on record:** `findings/01` CORRECTION block (diagnosis was wrong, then its first
+  correction was wrong too); `research/07` quotes every retracted sentence.
+- **83 law tests pass** (`uv run pytest`). Code: `creature/` now has sign features, ε-greedy acting with
+  unclipped behaviour ratio, learners pg / ac / q, centred Q (A16), `tabular_q_next` (A17),
+  `theta_finite`; `experiments/` has `stats.py` (paired bootstrap, gap fraction, cross-world),
+  `report_exp02.py`, `plot_exp02.py`, burned-seed guard, strict overrides.
+- **Viewer** renders 12- and 15-input brains and the TD instruments. Lives to watch:
+  `runs/exp02-linear/203-{ebm-td,ebm-dn-sign,ebm-all,ebm-dn,tabular_q_next}/run.json`,
+  `runs/exp02-xor/203-ebm-td/run.json`, plus EXP-01's under `runs/exp01-*`.
+  Serve: `cd ~/ebm-lab && uv run python -m http.server 8765` →
+  `http://localhost:8765/viewer/?run=runs/exp02-linear/203-ebm-td/run.json`.
 
-## The design in one breath
-3 diffusing chemical notes; items emit blends (`linear`: food A+B / poison B+C; `xor`: food = A+B
-together, poison = A or B alone); a body with energy, toxin and a homeostatic DRIVE (an energy); the only
-lesson is the drive's change; a conditional-RBM free-energy brain over (contrast, mean, change, body) × 3
-actions; π = softmax(−F/T); contrastive policy-gradient learning; day = act + cache; night = importance-
-corrected replay + downscaling + (placeholder) growth; baselines random / braitenberg / tabular_q / oracle.
+## Method this session (the swarm)
+Orchestrator (Fable) + 3 builders in worktrees + 2 hostile referees per conclusion (12 referee runs in
+all) + the orchestrator's own proof track. Every referee round changed the record: one reversed
+citation, two retractions, two blocks-run bugs (clipped behaviour ratio; Q offset at birth), one
+baseline defect (tabular Q not textbook), and the reading of the main result narrowed four times.
+Amendments A14–A17 in `DESIGN-AMENDMENTS.md`.
 
-## Verified by Claude this session (from execution)
-- All numbers in `findings/01` and `decisions/0001` come from `experiments/results/*/results.json`.
-- Zero-weight EBM lives as long as a random walker (loop is fair): `01b_diag_uniform`.
-- Finite-difference gradient check of the learning rule passes to 1e-6.
+## Seeds (burned for tuning, never reuse)
+0–7, 20–27 (EXP-02 pilots), 100–119 (EXP-01 main), 200–219 (EXP-02 main), 300–339 (proof),
+340–349 and 1000–1114 (referee diagnostics). `experiments/harness.py` enforces the first four sets.
 
-## Known limitations of v0 (do not over-read)
-- No seasons, no generations, no critic, no generative dreaming, placeholder growth rule.
-- Items never shown in the viewer (by design); field snapshots only on waking ticks.
-- Hyperparameters T/lr/clip were chosen on seeds 0–7; those seeds are burned for all future experiments.
+## Known limitations (do not over-read)
+- `ebm-all` ran at a step size unstable for it (α 0.3; at 0.1 it lives 4806 on fresh seeds): sign
+  features + Q not identified. Hidden units do not carry the linear-world win. No arm avoids poison.
+  Lifespan censored at 5250. Pairing by seed shares only the starting world. No seasons, no
+  generations, no entropy bonus, placeholder growth rule.
+- `ebm-td` either reaches the ceiling or starves (5/20 failures ate ≤ 1 food).
 
 ## Environment
-- Laptop venv via `uv` (numpy 2.5, pytest, matplotlib). No torch, none needed yet. GPU not needed.
-- Box: RTX 5060 Ti 16 GB, disk 97% full. Not used.
-- Token note: session 02 used ~10 Opus/Fable agent runs (research ×4, viewer ×1) + heavy main-thread work.
+- Laptop venv via `uv` (numpy, pytest, matplotlib). One life ≈ 0.1–0.3 s; the main run ≈ 110 s/world.
+- Box unused. No cloud spend. Firecrawl credits exhausted (402); WebSearch works.

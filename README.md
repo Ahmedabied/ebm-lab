@@ -23,8 +23,8 @@ knowledge from. No Genesis code is carried over.
 | `STATE.md` | where the lab is right now (updated every session) |
 | `HANDOFF.md` | what the next session does first |
 | `research/genesis-digest/` | what Genesis learned, distilled and cited (A-E + `00-SYNTHESIS.md`) |
-| `research/` | EBM literature notes (later) |
+| `research/` | research seats R1–R4 (`03`–`06`), the proof-of-possibility note `07` with its scripts |
 | `experiments/` | one folder per experiment, each with its own question, code, and results |
 | `decisions/` | numbered decision records |
-| `findings/` | durable results, each with the command that re-derives it |
+| `findings/` | durable results, each with the command that re-derives it (`01` negative, `02` the first positive learning result) |
 | `sessions/` | one journal per session |
