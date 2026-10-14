@@ -141,3 +141,8 @@ seeds, metrics and predictions above are unchanged.
     update is unweighted (off-policy); the day-end `done` makes δ spike to ≈ +|V| (20–40× the median)
     every evening; night 0 collapses entropy for pg and ac alike (median ≈ 0.04).
 12. **Instrument:** `theta_finite` in every summary (divergence flag).
+13. **alpha_q after A16 = 0.3** by the two-arm rule (two-arm mean 3591 vs 3036 at 0.1 and 1805 at
+    0.03; table in `experiments/results/02a_pilot_alpha/results.json` → `alpha_q_selection`). It is the top
+    edge of the grid; the grid is NOT extended because 1.0 was already shown to diverge (α|x|² ≈ 4.8 > 2).
+    Recorded doubt: `ebm-all` at 0.3 has night-0 td_abs 0.56 and day-0 entropy 0.47 (unstable signs), and
+    would have picked 0.1 alone; `ebm-td` alone picks 0.3. The main run proceeds with 0.3 as declared.
