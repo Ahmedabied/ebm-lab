@@ -277,32 +277,37 @@ class Life:
             return self._online_ac(x, a, r, x_next, done)
         if self.cfg.learner == "q":
             return self._online_q(x, a, r, x_next, done)
-        g = self.brain.grad_logpi(x[None, :], np.array([a]))
-        if self.trace is None:
-            self.trace = {k: np.zeros_like(self.brain.theta[k]) for k in self.brain.theta}
-        for k in self.trace:
-            self.trace[k] = self.cfg.lam * self.trace[k] + g[k][0]
-        self.rbar = 0.99 * self.rbar + 0.01 * r
-        for k in self.brain.theta:
-            self.brain.theta[k] += self.cfg.day_lr * (r - self.rbar) * self.trace[k]
+        self._trace_step(x, a, self.cfg.lam, self._pg_lesson(r))
 
-    def _online_ac(self, x, a, r, x_next, done):
-        """Actor-critic(lambda), Sutton & Barto 2018 sec 13.5: critic TD(0); actor trace decays at
-        gamma*lam (the textbook AC(lambda) trace; with a TD-error lesson a decay above gamma would
-        over-count credit). Lesson = delta / running scale. The trace is cleared at a terminal
-        transition (end of day) and on growth."""
-        xn = x if x_next is None else x_next
-        d = self.critic.update(x[None, :], [r], xn[None, :], [float(done)], self.cfg.alpha_v)[0]
-        self._td_day.append(abs(float(d)))
-        lesson = d / self.critic.scale()
+    def _pg_lesson(self, r):
+        """"pg" online lesson: raw drive change minus the running baseline rbar."""
+        self.rbar = 0.99 * self.rbar + 0.01 * r
+        return r - self.rbar
+
+    def _trace_step(self, x, a, decay, lesson):
+        """Shared online actor step (pg and ac): e <- decay*e + grad log pi(a|x);
+        theta += day_lr * lesson * e. Same operations, same order, for both learners."""
         g = self.brain.grad_logpi(x[None, :], np.array([a]))
         if self.trace is None:
             self.trace = {k: np.zeros_like(self.brain.theta[k]) for k in self.brain.theta}
-        decay = self.cfg.gamma * self.cfg.lam
         for k in self.trace:
             self.trace[k] = decay * self.trace[k] + g[k][0]
         for k in self.brain.theta:
             self.brain.theta[k] += self.cfg.day_lr * lesson * self.trace[k]
+
+    def _online_ac(self, x, a, r, x_next, done):
+        """Actor-critic(lambda), Sutton & Barto 2018 sec 13.5: critic TD(0); actor trace decays at
+        gamma*lam (the textbook AC(lambda) trace; with a TD-error lesson a decay above gamma would
+        over-count credit). Amendment A14: the online lesson is the RAW delta in drive units, used
+        exactly where "pg" uses (r - rbar), same day_lr, same _trace_step. Differences from "pg"
+        online: (i) baseline rbar -> V(x); (ii) bootstrap gamma*(1-done)*V(x'); (iii) KNOWN third
+        difference: trace decay gamma*lam = 0.855 vs pg's lam = 0.95, and the trace is cleared at a
+        terminal transition (end of day). The running-scale standardisation is used only at night
+        (where "pg" also standardises R per day); online deltas still feed that scale."""
+        xn = x if x_next is None else x_next
+        d = self.critic.update(x[None, :], [r], xn[None, :], [float(done)], self.cfg.alpha_v)[0]
+        self._td_day.append(abs(float(d)))
+        self._trace_step(x, a, self.cfg.gamma * self.cfg.lam, d)
         if done:
             self.trace = None
 
@@ -320,7 +325,9 @@ class Life:
     # ---- night -----------------------------------------------------------------------------
     def sleep(self, surprise: float):
         c = self.cfg
-        self.event("sleep_start", surprise=round(surprise, 5), H=self.n_units())
+        self.event("sleep_start", surprise=round(surprise, 5), H=self.n_units(),
+                   wake_entropy=(round(self.brain.entropy(self.cache.days[-1][0]), 4)
+                                 if self.brain and self.cache.days else None))
         if self.brain and c.sleep != "none" and self.cache.days:
             if c.sleep == "noise":
                 # perturb by the same norm a replay night would have moved the weights

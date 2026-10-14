@@ -141,7 +141,12 @@ class Brain:
     def learn_q(self, X: np.ndarray, a: np.ndarray, y: np.ndarray, alpha: float) -> float:
         """Semi-gradient Q-learning step on a batch: theta += alpha * mean_i (y_i - Q_i) dQ_i/dtheta.
         y is held fixed (computed by the caller before the step). Returns mean |y - Q| before the
-        step (the TD-error instrument)."""
+        step (the TD-error instrument).
+        KNOWN LIMITATION (EXP-02, not changed by design): Q = -F includes sum_h softplus(c_h +
+        u_h.x + v_{h,a}), so at birth Q is ~H0*log 2 (~2.8 for H0=4) for every action, far from
+        Q* ~ r/(1-gamma) ~ -0.1; and a unit grown with v=0 adds softplus(c+u.x) ~ log 2 ~ 0.69 to
+        every action's Q. Greedy action is unchanged, but the TD error shifts by ~(gamma-1)*0.69 ~
+        -0.07 (large next to r ~ 1e-2). Downscaling (w,u,v *= 1-delta) also moves Q values."""
         X = np.atleast_2d(X); a = np.asarray(a); y = np.asarray(y, dtype=np.float64)
         N = X.shape[0]
         td = y - self.Q(X)[np.arange(N), a]

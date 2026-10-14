@@ -129,3 +129,37 @@ def test_td_learners_are_deterministic_per_seed(tmp_path, learner):
     assert s1 == s2 and h1 == h2
     if v1 is not None: assert np.array_equal(v1, v2)
     assert h3 != h1
+
+
+def test_ac_online_with_zero_critic_and_gamma0_equals_pg_online_with_rbar0(tmp_path):
+    """A14: with V = 0 (alpha_v = 0) and gamma = 0, delta = r exactly, and the "ac" online actor step
+    must equal the "pg" online step with rbar = 0, bit for bit. lam = 0 so both traces decay alike
+    (ac decays at gamma*lam = 0; pg at lam)."""
+    mk = lambda learner: Life(SimConfig(seed=7, policy="ebm", learner=learner, gamma=0.0, lam=0.0,
+                                        alpha_v=0.0, day_learning=True, runs_dir=str(tmp_path)))
+    Lac, Lpg = mk("ac"), mk("pg")
+    Lpg._pg_lesson = lambda r: r          # rbar = 0
+    theta0 = Lpg.brain.snapshot()
+    for k in Lpg.brain.theta: assert np.array_equal(Lpg.brain.theta[k], Lac.brain.theta[k])
+    rng = np.random.default_rng(0)
+    for t in range(50):
+        x = rng.normal(size=DIM).astype(np.float32); a = int(rng.integers(A)); r = float(rng.normal(0, 0.01))
+        xn = rng.normal(size=DIM).astype(np.float32)
+        Lpg.online_learn(x, a, r, 0.0)
+        Lac.online_learn(x, a, r, 0.0, x_next=xn, done=False)
+    for k in Lpg.brain.theta: assert np.array_equal(Lpg.brain.theta[k], Lac.brain.theta[k]), k
+    assert not np.array_equal(Lpg.brain.theta["b"], theta0["b"])     # the step did move theta
+
+
+def test_ac_online_lesson_is_raw_delta_not_standardised(tmp_path):
+    """One fresh-trace step: theta moves by day_lr * delta * grad log pi, with no scale division."""
+    L = Life(SimConfig(seed=8, policy="ebm", learner="ac", alpha_v=0.0, day_learning=True,
+                       runs_dir=str(tmp_path)))
+    rng = np.random.default_rng(1)
+    L.critic.v = rng.normal(size=DIM)
+    x, xn = rng.normal(size=DIM), rng.normal(size=DIM); a, r = 1, 0.02
+    d = r + L.cfg.gamma * L.critic.v @ xn - L.critic.v @ x
+    g = L.brain.grad_logpi(x[None, :], np.array([a])); before = L.brain.snapshot()
+    L.online_learn(x, a, r, 0.0, x_next=xn, done=False)
+    for k in before:
+        assert np.allclose(L.brain.theta[k] - before[k], L.cfg.day_lr * d * g[k][0], atol=1e-12)
