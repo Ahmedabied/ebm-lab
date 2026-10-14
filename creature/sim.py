@@ -43,8 +43,9 @@ class SimConfig:
     alpha_v: float = 0.3           # critic step size ("ac"); pilot 02a after A14, extended on merged
                                    # main (seeds 20-27): max mean ticks_alive over
                                    # {0.01,0.03,0.1,0.3,1.0,3.0}; interior (3.0 diverges)
-    alpha_q: float = 0.1           # Q-mode step size ("q"); pilot 02a (seeds 20-27, max mean
-                                   # ticks_alive over {0.003,0.01,0.03,0.1,0.3}; interior)
+    alpha_q: float = 0.3           # Q-mode step size ("q"); pilot 02a re-run after A16 (centred Q;
+                                   # seeds 20-27): argmax over {0.03,0.1,0.3} of the mean of ebm-td's
+                                   # and ebm-all's mean ticks_alive. TOP EDGE of the grid.
     scale_decay: float = 0.99      # "ac": EMA decay of delta^2 for the actor's running scale
                                    # (~100-tick memory, i.e. a third of a day)
     # growth
