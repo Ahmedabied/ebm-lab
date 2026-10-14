@@ -171,3 +171,16 @@ model, use it. Do not create or change anything in his Cloudflare account withou
 7. **Coherence over everything.** No metaphor is used unless it maps exactly; if a metaphor breaks,
    say where it breaks. No "trust me". Every claim about the experiment comes from `findings/02` /
    `research/07` with the referees' corrections applied.
+
+## Addendum (2026-10-15, verbatim): "also while your explainign things show me visulas charts of how it
+## works and how it functions and what each change does to the visulaization and thank you <3 also nop
+## need for playground the lesson is all i need"
+- **No playground.** Item 6(b) above is withdrawn; the lesson is the whole deliverable. Keep 6(a)
+  ("pause and predict" beats) inside the video.
+- **Every explanation is accompanied by a live chart of the mechanism**, and every change is shown
+  as a change in that chart: when a symbol is introduced, its effect is animated (turn T up → the three
+  bars melt toward equal; turn one weight up → the energy landscape tilts and the creature's turn
+  flips; raise γ → the value chain reaches further; a poison bite → the bowl ball jumps up then drains;
+  a night of learning → the weight heatmap changes and the policy over a fixed sensation changes with
+  it). Rule: **no sentence of explanation without a picture that moves when the sentence's variable
+  moves.** Charts use the real lab numbers where a real number exists.
