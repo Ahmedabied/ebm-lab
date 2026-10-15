@@ -502,7 +502,7 @@ class Ch06(Scene):
         h19 = header("at night: shrink by 1%, and sometimes grow", SZ_BODY)
         ax19 = Axes(x_range=[0, 14, 2], y_range=[0.07, 0.1, 0.01], x_length=7, y_length=3.6,
                     axis_config={"color": DIM, "stroke_width": 2, "include_numbers": True, "font_size": 20, "decimal_number_config": {"num_decimal_places": 2}}).move_to([-2.6, -0.8, 0])
-        xl19 = T("night", SZ_TINY, DIM).next_to(ax19.x_axis, DOWN, buff=0.1); yl19 = T("knob length (w, u, v)", SZ_TINY, DIM).next_to(ax19.y_axis, UP, buff=0.1)
+        xl19 = T("night", SZ_TINY, DIM).next_to(ax19.x_axis, DOWN, buff=0.1); yl19 = T("knob length (w, u, v)", SZ_TINY, DIM).next_to(ax19.y_axis, UP, buff=0.1, aligned_edge=LEFT)
         curve = VMobject(stroke_color=C_W, stroke_width=4).set_points_as_corners([ax19.c2p(i, v) for i, v in enumerate(wn)])
         e0 = T("0.096", SZ_TINY, C_W).next_to(ax19.c2p(0, wn[0]), UP, buff=0.1); e1 = T("0.078", SZ_TINY, C_W).next_to(ax19.c2p(14, wn[-1]), UP, buff=0.1)
         self.play(FadeIn(h19), Create(ax19), FadeIn(xl19), FadeIn(yl19), run_time=0.8)

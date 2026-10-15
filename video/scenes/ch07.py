@@ -107,9 +107,9 @@ class Ch07(Scene):
         ax = Axes(x_range=[0, 5, 1], y_range=[-1, 1, 0.5], x_length=5.2, y_length=3.0,
                   axis_config={"color": DIM, "stroke_width": 2, "include_numbers": False}).move_to([-3.6, 0.3, 0])
         xl = T("night", SZ_TINY, DIM).next_to(ax.x_axis, DOWN, buff=0.1)
-        yl = T("resting turn bias  (+1 = always left, −1 = always right)", SZ_TINY, DIM).next_to(ax, UP, buff=0.35)
+        yl = T("resting turn bias  (+1 = always left, −1 = always right)", SZ_TINY, DIM).next_to(ax, UP, buff=0.15)
         ytk = VGroup(T("+1", 14, DIM).next_to(ax.c2p(0, 1), LEFT, buff=0.1), T("−1", 14, DIM).next_to(ax.c2p(0, -1), LEFT, buff=0.1))
-        hh = header("Seed 313 flips overnight", SZ_BIG)
+        hh = header("Seed 313 flips overnight", SZ_BIG).to_edge(UP, buff=0.25)
         self.play(FadeIn(hh), FadeIn(ax), FadeIn(xl), FadeIn(yl), FadeIn(ytk), run_time=0.6)
         others = VGroup()
         for x in lives[:6]:
