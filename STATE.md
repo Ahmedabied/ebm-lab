@@ -1,6 +1,14 @@
 # STATE — EBM lab
 
-Updated 2026-10-14, end of session 03. Everything below is committed (see `git log`).
+Updated 2026-10-15, end of session 04 (the teaching video). Everything below is committed (see `git log`).
+
+## Lesson 01 (session 04)
+Built: `video/out/ebm-lab-lesson-01.qh.mp4` with chapters, thumbnail and provenance; script refereed twice
+(math + teaching); `video/data/frozen_brain_test.json` re-derives the frozen/mirrored/birth-brain test on
+fresh seeds 500–514 (5250 15/15; 1013 0/15; 1419 2/15). One lab-relevant observation from the replay dump
+(`video/data/life203.npz`): in seed 203 the steering weight is the contrast-**B** pair (positive all life);
+the A pair crosses zero on day 3. `world.py`'s comment "B carries no information" is still wrong for the
+gradient (research/07 §2.2). Seeds 500–514 are now used (frozen test, not tuning).
 
 ## Goal pivot (2026-10-15, Ahmed): see `decisions/0002_goal_pivot.md`
 Experiment goal = the smallest creature with brain cells similar to humans; EBM goal = mimic how a
@@ -41,7 +49,7 @@ Amendments A14–A17 in `DESIGN-AMENDMENTS.md`.
 
 ## Seeds (burned for tuning, never reuse)
 0–7, 20–27 (EXP-02 pilots), 100–119 (EXP-01 main), 200–219 (EXP-02 main), 300–339 (proof),
-340–349 and 1000–1114 (referee diagnostics). `experiments/harness.py` enforces the first four sets.
+340–349 and 1000–1114 (referee diagnostics), 500–514 (lesson 01 frozen-brain test; no tuning). `experiments/harness.py` enforces the first four sets.
 
 ## Known limitations (do not over-read)
 - `ebm-all` ran at a step size unstable for it (α 0.3; at 0.1 it lives 4806 on fresh seeds): sign

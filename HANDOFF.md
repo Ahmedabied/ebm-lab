@@ -1,11 +1,18 @@
 # HANDOFF — read this first next session
 
-## NEXT TASK (locked 2026-10-15): the teaching video
-Ahmed's verbatim brief, the facts (ElevenLabs free tier = 10k chars ≈ 11 min; `eleven_v4` exists;
-ManimCE 0.22 in `video/.venv`; TinyTeX in `~/.TinyTeX`), the syllabus and the pipeline are in
-**`video/BRIEF.md`**. First action after compaction: verify a `MathTex` render, then ask Ahmed the one
-voice-budget question in the brief (A/B/C) with the sample path, then build. The key is in `video/.env`
-(gitignored); never write it into a document.
+## The teaching video: LESSON 01 BUILT (session 04, 2026-10-15)
+`video/out/ebm-lab-lesson-01.qh.mp4` (1080p60, ~60 min) + `chapters.txt` (YouTube chapter stamps) +
+`thumbnail.png` + `PROVENANCE.md` (every number shown, with file and field). Script `video/script/00–09`,
+facts `FACTS.md`, referee reports `REFEREE-*.md`, journal `sessions/2026-10-15_session-04_teaching-video.md`,
+rebuild recipe `video/README.md`. **ElevenLabs free quota is spent until 2026-11-14** (chapters 00–01,
+voice Bella v4); chapters 02–09 use Kokoro locally. YouTube upload is Ahmed's. Watch it before the next
+session; anything wrong in it is a script edit + `tts.py kokoro NN` (only changed paragraphs re-voice) +
+`./build.sh render qh NN && ./build.sh mux qh NN && ./build.sh concat qh`.
+
+## NEXT TASK: the brain-cell property list (decisions/0002)
+First deliverable of the next research session: the written list of brain-cell properties the EBM unit
+must mimic (learn / connect / function / die / be born), each with a source and a falsifiable test;
+EXP-03 is chosen from that list.
 
 ## Where it stands (one paragraph)
 EXP-02 gave the lab its first positive within-life learning result: the EBM trained as a value
@@ -16,9 +23,8 @@ old step size collapses on night 0 (`research/07`). Two referee-found bugs were 
 and kept as the pre-registered target with a textbook variant added (A17).
 
 ## Goal pivot first
-Read `decisions/0002_goal_pivot.md`. The first deliverable next session is the written list of
-brain-cell properties the EBM must mimic, each with a source and a falsifiable test; EXP-03 is chosen
-from that list, not from the lever list below.
+Read `decisions/0002_goal_pivot.md`. The lesson's chapter 7 and 9 already state the pivot's verdict on
+EXP-02 (learn yes, function yes, connect unused, born placeholder, die missing).
 
 ## Decisions that are Ahmed's (nothing below is started)
 1. **Which next experiment (EXP-03), one only.** `findings/02` §"What it points to" lists five;

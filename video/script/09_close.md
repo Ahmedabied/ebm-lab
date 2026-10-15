@@ -1,0 +1,15 @@
+# 09 — Close
+voice: kokoro
+length-target: ~2 min
+
+## p01 | viz: the cold-open screen again, seed 203 replaying from day 10, with one label at a time in a banner while the element it names flashes: the smells (chapter 3), the antennae and x (chapter 3), the weights and energy (chapter 5), the highest Q (chapter 5), the bowl (chapter 4), the lesson (chapter 4), the promise (chapter 6).
+This is the screen we started with. Now you can read it. The smells are three fields that spread, fade and leak from sources. The antennae turn them into twelve numbers. The weights turn the twelve numbers into three evidences, and the energy is their negative. The highest Q is taken, nine times in ten. The body's bowl moves, and the drop is the lesson. The lesson corrects the promise that was made, and the promise walks back along the chain from the bite.
+
+## p02 | viz: three columns: proved by construction (the forager exists in the knob space, two knobs); measured (the lesson carries about twice as much signal as noise per day; rule one's step was 8–16× too large; rule two forages and the frozen and mirrored tests show it is learned); not shown (beats tabular Q; avoids poison; the committee matters; sign features help the value rule).
+What is proved: the forager exists in this knob space, with two knobs. What is measured: the body's lesson carries about twice as much signal as noise in a day; the first rule's step was eight to sixteen times too large; the value rule forages, and the frozen and mirrored tests show it is the learned contrast knobs that carry it. What is not shown: that it beats tabular Q; that it avoids poison; that the committee matters in this world; that sign features help the value rule. Those are open, not failed.
+
+## p03 | viz: five doors (findings/02 §"What it points to") and the pivot's first deliverable: fix the step and re-ask sign features; rule one at a sane step with a small push to keep trying all three moves; make the xor world bite so the committee is needed; sleep on a learner that learns; generations and inherited priors. Plus: the list of brain-cell properties to mimic, each with a source and a test.
+Five doors are open. Fix the step size and ask the sign-feature question properly. Give rule one a sane step and a small push to keep trying all three moves, so "policy gradient cannot learn this" is tested rather than assumed. Make the xor world punish the linear solution, so the committee has to earn its keep. Now that something learns, test sleep: replay against today-only against noise against none. And generations: a learner that reaches competence in five days has priors worth inheriting. And before any of them, the pivot's first deliverable: the written list of what a brain cell does that this unit must mimic, each item with a source and a test.
+
+## p04 | viz: end card: "Next session we pick one." The loop diagram, complete, each box flashing once. Below it, small: "Every number in this lesson: out/PROVENANCE.md".
+Next session we pick one. You now know every number on that first screen, where it comes from, and why it is computed that way. The rest is choosing the next question.

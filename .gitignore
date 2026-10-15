@@ -11,3 +11,12 @@ video/.env
 video/out/
 video/media/
 video/audio/
+# video build products (reproducible: video/README.md)
+video/media/
+video/out/*.mp4
+video/out/qc/
+video/audio/*/*.wav
+video/audio/*/*.mp3
+video/data/*.npz
+video/scenes/_probe/
+video/.venv/

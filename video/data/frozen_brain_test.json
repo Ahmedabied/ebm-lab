@@ -1,0 +1,88 @@
+{
+ "source_brain": "runs/exp02-linear/203-ebm-td/run.json brain[4] (after night 4 = day-5 brain)",
+ "seeds": [
+  500,
+  501,
+  502,
+  503,
+  504,
+  505,
+  506,
+  507,
+  508,
+  509,
+  510,
+  511,
+  512,
+  513,
+  514
+ ],
+ "days": 15,
+ "arms": {
+  "frozen": {
+   "ticks_alive": [
+    5250,
+    5250,
+    5250,
+    5250,
+    5250,
+    5250,
+    5250,
+    5250,
+    5250,
+    5250,
+    5250,
+    5250,
+    5250,
+    5250,
+    5250
+   ],
+   "mean": 5250.0,
+   "at_ceiling": 15
+  },
+  "frozen-mirrored": {
+   "ticks_alive": [
+    786,
+    640,
+    1357,
+    736,
+    1603,
+    1265,
+    1081,
+    1024,
+    945,
+    1239,
+    832,
+    859,
+    801,
+    1068,
+    953
+   ],
+   "mean": 1012.6,
+   "at_ceiling": 0
+  },
+  "birth-brain": {
+   "ticks_alive": [
+    613,
+    5250,
+    638,
+    807,
+    936,
+    549,
+    646,
+    581,
+    2259,
+    5250,
+    1097,
+    1127,
+    549,
+    439,
+    549
+   ],
+   "mean": 1419.3333333333333,
+   "at_ceiling": 2
+  }
+ },
+ "commit": "12f6e91",
+ "command": "uv run python video/data/frozen_brain_test.py > video/data/frozen_brain_test.json"
+}
