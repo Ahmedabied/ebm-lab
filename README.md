@@ -19,6 +19,7 @@ knowledge from. No Genesis code is carried over.
 | `experiments/` | harness, calibration, pilots, pre-registrations, `results/` (json + png) |
 | `viewer/` | the run viewer (see its README) |
 | `runs/` | exported lives to watch |
+| `weights/` | the trained brains (final weights of seed 203, both worlds) + `try_it.py` to drop one into a new world |
 | `CLAUDE.md` | ground rules for any agent working here |
 | `STATE.md` | where the lab is right now (updated every session) |
 | `HANDOFF.md` | what the next session does first |

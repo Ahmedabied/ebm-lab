@@ -20,3 +20,5 @@ video/audio/*/*.mp3
 video/data/*.npz
 video/scenes/_probe/
 video/.venv/
+# weights/try_it.py output (demo lives, regenerate any time)
+runs/try_it/

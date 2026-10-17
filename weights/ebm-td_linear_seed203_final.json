@@ -1,0 +1,59 @@
+{
+ "source": "runs/exp02-linear/203-ebm-td (re-run, summary matches the recorded life)",
+ "summary": {
+  "alive": true,
+  "days": 15,
+  "ticks_alive": 5250,
+  "food": 13.35,
+  "poison": 1.5,
+  "mean_drive": 0.01866,
+  "first_food_t": 14,
+  "poison_bites_after_first": 29,
+  "H": 5,
+  "theta_finite": true
+ },
+ "brain": {
+  "dim": 12,
+  "H0": 4,
+  "T": 0.3,
+  "lr": 1.0,
+  "init_scale": 0.01,
+  "centre": true,
+  "act_mode": "egreedy",
+  "eps": 0.1
+ },
+ "input_names": [
+  "contrast_A",
+  "contrast_B",
+  "contrast_C",
+  "mean_A",
+  "mean_B",
+  "mean_C",
+  "change_A",
+  "change_B",
+  "change_C",
+  "body_E",
+  "body_X",
+  "bias"
+ ],
+ "shapes": {
+  "b": [
+   3
+  ],
+  "w": [
+   3,
+   12
+  ],
+  "c": [
+   5
+  ],
+  "u": [
+   5,
+   12
+  ],
+  "v": [
+   5,
+   3
+  ]
+ }
+}

@@ -1,0 +1,59 @@
+{
+ "source": "runs/exp02-xor/203-ebm-td (re-run, summary matches the recorded life)",
+ "summary": {
+  "alive": true,
+  "days": 15,
+  "ticks_alive": 5250,
+  "food": 9.9,
+  "poison": 2.3,
+  "mean_drive": 0.09525,
+  "first_food_t": 14,
+  "poison_bites_after_first": 45,
+  "H": 8,
+  "theta_finite": true
+ },
+ "brain": {
+  "dim": 12,
+  "H0": 4,
+  "T": 0.3,
+  "lr": 1.0,
+  "init_scale": 0.01,
+  "centre": true,
+  "act_mode": "egreedy",
+  "eps": 0.1
+ },
+ "input_names": [
+  "contrast_A",
+  "contrast_B",
+  "contrast_C",
+  "mean_A",
+  "mean_B",
+  "mean_C",
+  "change_A",
+  "change_B",
+  "change_C",
+  "body_E",
+  "body_X",
+  "bias"
+ ],
+ "shapes": {
+  "b": [
+   3
+  ],
+  "w": [
+   3,
+   12
+  ],
+  "c": [
+   8
+  ],
+  "u": [
+   8,
+   12
+  ],
+  "v": [
+   8,
+   3
+  ]
+ }
+}

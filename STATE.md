@@ -49,7 +49,7 @@ Amendments A14–A17 in `DESIGN-AMENDMENTS.md`.
 
 ## Seeds (burned for tuning, never reuse)
 0–7, 20–27 (EXP-02 pilots), 100–119 (EXP-01 main), 200–219 (EXP-02 main), 300–339 (proof),
-340–349 and 1000–1114 (referee diagnostics), 500–514 (lesson 01 frozen-brain test; no tuning). `experiments/harness.py` enforces the first four sets.
+340–349 and 1000–1114 (referee diagnostics), 500–514 (lesson 01 frozen-brain test; no tuning), 9000–9019 (weights/README demo; no tuning). `experiments/harness.py` enforces the first four sets.
 
 ## Known limitations (do not over-read)
 - `ebm-all` ran at a step size unstable for it (α 0.3; at 0.1 it lives 4806 on fresh seeds): sign
